@@ -2,6 +2,9 @@ from scapy.all import *
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, TCP, UDP, ICMP, icmptypes
 from scapy.data import ETHER_TYPES
+
+from dbDaemon import Daemon
+
 import argparse
 import os
 import sys
@@ -45,7 +48,7 @@ def extract_icmp(parsed_dict, icmp_pkt):
     print(icmp_pkt.summary())
     # TODO: Ask which more fields are necessary
     parsed_dict['icmp_type'] = icmp_pkt.type  # 0 for request, 8 for reply
-    parsed_dict['icmp_type_str'] = icmptypes[icmp_pkt.type]
+    #parsed_dict['icmp_type_str'] = icmptypes[icmp_pkt.type]
     parsed_dict['icmp_code'] = icmp_pkt.code  # code field which gives extra information about icmp type
     
 def extract_arp(parsed_dict, arp_pkt):
@@ -100,7 +103,9 @@ def parse_packet(pkt_data):
 
     print("Dictionary\n", parsed_dict)
     print(pkt_data.summary())
-    return
+    raw_dump = raw(pkt_data)
+    parsed_dict['raw'] = raw_dump
+    return parsed_dict
 
 
 
@@ -111,10 +116,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pcap analyzer')
     parser.add_argument('--pcap', help="provide pcap to analyze", required=True)
     args = parser.parse_args()
+
+    db = Daemon();
+
     for pkt_data, pkt_metadata in RawPcapReader(args.pcap):
         count = count + 1
         print("Packet no ", count)
-        # print(pkt_metadata)
-        # print(pkt_data)
-        print(type(pkt_data))
-        parse_packet(Ether(pkt_data))
+        #print(pkt_metadata)
+        #print(pkt_data)
+        # print(type(pkt_data))
+            
+        packet = parse_packet(Ether(pkt_data))
+        raw_dump = packet.pop('raw')
+        db.insert_packet(raw_dump, packet)
+
+    db.close();
