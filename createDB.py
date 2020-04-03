@@ -1,24 +1,34 @@
 import psycopg2
 import sys
+import argparse
 
-conn = psycopg2.connect('dbname=scada user=mini');
-c = conn.cursor();
 
-c.execute('''
-SELECT * FROM pg_catalog.pg_tables WHERE tablename='packet_raw';
-''')
+parser = argparse.ArgumentParser(description='create DB script')
+parser.add_argument('--recreate', help="drop and cerate new tables", action='store_true')
 
-if (c.fetchone() != None):
-    c.execute("SELECT COUNT(*) FROM packet_raw")
-    print("packet_raw exists already exists with {} rows".format(c.fetchone()[0]))
-    exit(1)
+args = parser.parse_args()
+
+conn = psycopg2.connect('dbname=scada user=mini')
+c = conn.cursor()
+
+if args.recreate: 
+    c.execute("DROP TABLE packet_raw;")
+    c.execute("DROP TABLE packet_feat;")
+else:
+    c.execute("SELECT * FROM pg_catalog.pg_tables WHERE tablename='packet_raw';")
+    if (c.fetchone() != None):
+        c.execute("SELECT COUNT(*) FROM packet_raw")
+        print("packet_raw exists already exists with {} rows".format(c.fetchone()[0]))
+        exit(1)
+
+
 
 # TODO columns
 c.execute('''
 CREATE TABLE packet_raw (
     id SERIAL PRIMARY KEY,
     time TIMESTAMP,
-    raw TEXT NOT NULL
+    raw bytea NOT NULL
 );
 ''')
 
