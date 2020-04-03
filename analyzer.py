@@ -2,6 +2,9 @@ from scapy.all import *
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, TCP, UDP, ICMP, icmptypes
 from scapy.data import ETHER_TYPES
+import argparse
+import os
+import sys
 
 # Time ??, Source IP(d), Destination IP(d), Protocol ??, Length(d),
 # Source Port(d), Dest Port(d), TTL(d), IP version ??
@@ -54,6 +57,9 @@ def extract_arp(parsed_dict, arp_pkt):
     parsed_dict['arp_hwdst'] = arp_pkt.hwdst
 
 def parse_packet(pkt_data):
+    
+    print(type(pkt_data))
+    # pkt_data = Ether(pkt_data)
     print(list(expand(pkt_data)))   
     #print(ip_pkt.show())
     # TODO: Initialize data
@@ -102,10 +108,13 @@ count = 0
 
 
 if __name__ == "__main__":
-    for pkt_data, pkt_metadata in RawPcapReader('example.pcap'):
+    parser = argparse.ArgumentParser(description='Pcap analyzer')
+    parser.add_argument('--pcap', help="provide pcap to analyze", required=True)
+    args = parser.parse_args()
+    for pkt_data, pkt_metadata in RawPcapReader(args.pcap):
         count = count + 1
         print("Packet no ", count)
         # print(pkt_metadata)
         # print(pkt_data)
         print(type(pkt_data))
-        parse_packet(pkt_data)
+        parse_packet(Ether(pkt_data))
