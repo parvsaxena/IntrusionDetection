@@ -33,12 +33,12 @@ def extract_ether(parsed_dict, ether_pkt):
     # print(ETHER_TYPES['IPV4'])
 
 def extract_tcp(parsed_dict, tcp_pkt):
-    parsed_dict['src_port'] = tcp_pkt.sport
-    parsed_dict['dst_port'] = tcp_pkt.dport
+    parsed_dict['tcp_src_port'] = tcp_pkt.sport
+    parsed_dict['tcp_dst_port'] = tcp_pkt.dport
 
 def extract_udp(parsed_dict, udp_pkt):
-    parsed_dict['src_port'] = udp_pkt.sport
-    parsed_dict['dst_port'] = udp_pkt.dport
+    parsed_dict['udp_src_port'] = udp_pkt.sport
+    parsed_dict['udp_dst_port'] = udp_pkt.dport
     parsed_dict['udp_len'] = udp_pkt.len
 
 def extract_icmp(parsed_dict, icmp_pkt):
