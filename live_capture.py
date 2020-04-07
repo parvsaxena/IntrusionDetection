@@ -1,13 +1,14 @@
 import subprocess
 import shlex
 from scapy.all import *
-from analyzer import parse_packet
+from analyzer import PacketAnalyzer
 
 
 # Change interface with any interface from tcpdump -D, or the one where you want to monitor. Can also provide list of interfaces
 count = 0
-sniff(iface='wlp58s0', store=0, prn=parse_packet)
-
+pkt_analyzer = PacketAnalyzer(run_in_bg = True) 
+sniff(iface='eth3', store=0, prn=pkt_analyzer.parse_packet, timeout = 600)
+print("FInishing up\n")
 # for pkt in sniff(iface='wlp58s0', store=0, prn=parse_packet):
     # count = count + 1
     # print("Packet no", count)

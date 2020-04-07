@@ -9,6 +9,7 @@ parser.add_argument('--recreate', help="drop and cerate new tables", action='sto
 args = parser.parse_args()
 
 conn = psycopg2.connect('dbname=scada user=mini')
+#conn = psycopg2.connect("dbname='scada' user='postgres' host='localhost'")
 c = conn.cursor()
 
 if args.recreate: 
@@ -27,7 +28,7 @@ else:
 c.execute('''
 CREATE TABLE packet_raw (
     id SERIAL PRIMARY KEY,
-    time TIMESTAMP,
+    time VARCHAR(128),
     raw bytea NOT NULL
 );
 ''')
@@ -35,7 +36,7 @@ CREATE TABLE packet_raw (
 c.execute('''
 CREATE TABLE packet_feat (
     id INTEGER,
-    time TIMESTAMP,
+    time VARCHAR(128),
 
     ip_src VARCHAR(128),
     ip_dst VARCHAR(128),

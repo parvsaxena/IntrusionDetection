@@ -9,19 +9,28 @@ import argparse
 import os
 import sys
 
-from analyzer import parse_packet
+from analyzer import PacketAnalyzer
 
-db =Daemon()
+db = Daemon()
+print("Daemon created\n")
+pkt_raw_list = db.read_all_pkt_raw()
+pkt_features_list =  db.read_all_pkt_features()
 
-pkt = db.read_one_pkt()
-if pkt is not None:
-    print("Reading one dump")
-    print(pkt)
-    print(Ether(pkt[2]).summary())
-    print(parse_packet(Ether(pkt[2])))
-else:
-    print ("COuldnt read anything")
+for pkt_raw in pkt_raw_list:
+    print("Reading one dump\n")
+    print(pkt_raw)
+    print(Ether(pkt_raw[2]).summary())
+    pkt_analyzer = PacketAnalyzer(False)
+    print(pkt_analyzer.parse_packet(Ether(pkt_raw[2]), False))
 
-db.close()
+for pkt_raw in pkt_features_list:
+    print("Reading one dump\n")
+    print(pkt_raw)
+    
+    #print(Ether(pkt_raw[2]).summary())
+    #pkt_analyzer = PacketAnalyzer(False)
+    #print(pkt_analyzer.parse_packet(Ether(pkt_raw[2]), False))
+
+# db.close()
 
 
