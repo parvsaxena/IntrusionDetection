@@ -16,8 +16,8 @@ def bytea2bytes(value, cur):
     if m is not None:
         return m.tobytes()
 
-def dbDaemon(queue):
-    db = dbDriver()
+def dbDaemon(queue, dbName="scada"):
+    db = dbDriver(dbName)
     # atexit.register(close_db, db)
     def close_db(*args):
         print("Inserting rest of queue")
@@ -30,23 +30,17 @@ def dbDaemon(queue):
         exit(0)
 
     signal.signal(signal.SIGINT, close_db)
-    # signal.signal(signal.SIGTSTP, close_db)
-    # signal.signal(signal.SIGQUIT, close_db)
-    # signal.signal(signal.SIGINFO, close_db)
- 
     signal.signal(signal.SIGTERM, close_db)
   
     while True:
-        # db = Daemon()
         parsed_pkt = queue.get()
         raw_dump = parsed_pkt.pop('raw')
         db.insert_packet(raw_dump, parsed_pkt)
-        # db.close()   
 
 
 class dbDriver():
-    def __init__(self):
-        self.conn = psycopg2.connect('dbname=scada user=mini')
+    def __init__(self, dbName):
+        self.conn = psycopg2.connect('dbname={} user=mini'.format(dbName))
         self.cur = self.conn.cursor()
         self.counter = 0
     
@@ -54,24 +48,28 @@ class dbDriver():
         self.close()
     
     # insert packet passed as dictionary, with fields corr. to column names
-    def insert_packet(self, raw, features):
+    def insert_packet(self, raw, features, retry=False):
         # print("**********Insertion called") 
-        subquery = self.cur.mogrify(query1, (raw,features['time']))
-        subquery = subquery.decode()
+        try:
+            subquery = self.cur.mogrify(query1, (raw, features['time']))
+            subquery = subquery.decode()
 
-        cols = features.keys()
-        if (len(cols) > 0):
-            col_names = ", ".join(cols)
-            vals = ", ".join(["%({0})s".format(col_name) for col_name in cols])
-            self.cur.execute(query2.format(subquery, col_names, vals), features)
-        else:
-            # if the dict is empty, just insert id
-            self.cur.execute(query3.format(subquery))
-        
-        if  self.counter % 1000 == 0:
-            self.conn.commit()
-        self.counter += 1
- 
+            cols = features.keys()
+            if (len(cols) > 0):
+                col_names = ", ".join(cols)
+                vals = ", ".join(["%({0})s".format(col_name) for col_name in cols])
+                self.cur.execute(query2.format(subquery, col_names, vals), features)
+            else:
+                # if the dict is empty, just insert id
+                self.cur.execute(query3.format(subquery))
+            
+            if  self.counter % 1000 == 0:
+                self.conn.commit()
+            self.counter += 1
+        except psycopg2.InterfaceError:
+            self.cur.close()    
+            self.cur = conn.cursor()
+            self.insert_packet(raw, features, True)
     
     def read_one_pkt_raw(self):
         # self.cur.execute("SELECT COUNT(*) FROM packet_raw")
@@ -99,4 +97,3 @@ class dbDriver():
         self.cur.close()
         self.conn.commit()
         self.conn.close()
-        print("*****Connection has been closed")

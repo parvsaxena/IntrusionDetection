@@ -64,20 +64,14 @@ class PacketAnalyzer:
         if run_in_bg == True:
             # requires setting up queue, and starting zombie process
             self.pqueue = Queue()
-            db_inserion_process = Process(target=dbDaemon, args=(self.pqueue,))
-            print("Creating",  db_inserion_process.name, db_inserion_process.pid)
-            db_inserion_process.daemon = True
-            db_inserion_process.start()
+            db_insertion_process = Process(target=dbDaemon, args=(self.pqueue,))
+            print("Creating",  db_insertion_process.name, db_inserion_process.pid)
+            db_insertion_process.daemon = True
+            db_insertion_process.start()
         else:
             self.pqueue = None
-            self.db = dbDaemon()
+            self.db = dbDriver("scada")
         self.packet_count = 0
-    #def __del__(self):
-    #    pass
-        # while self.pqueue.empty() is False:
-            # print("waiting for buffer to end")
-            # timer.sleep(5)
-        
 
     def parse_packet(self, pkt_data, insert_packet = True):
         #print(type(pkt_data))
@@ -132,8 +126,8 @@ class PacketAnalyzer:
         parsed_dict['raw'] = raw_dump
         if insert_packet is True:
             if self.pqueue is None:
-                raw_dump = packet.pop('raw')
-                db.insert_packet(raw_dump, packet)
+                raw_dump = parsed_dict.pop('raw')
+                self.db.insert_packet(raw_dump, parsed_dict)
             else:
                 self.pqueue.put(parsed_dict)
                 print("Queue size", self.pqueue.qsize())
@@ -153,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument('--pcap', help="provide pcap to analyze", required=True)
     args = parser.parse_args()
 
-    pkt_analyzer = PacketAnalyzer()
+    pkt_analyzer = PacketAnalyzer(False)
     for pkt_data, pkt_metadata in RawPcapReader(args.pcap):
         count = count + 1
         print("Packet no ", count)
