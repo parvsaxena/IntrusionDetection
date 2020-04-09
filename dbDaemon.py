@@ -17,15 +17,15 @@ def bytea2bytes(value, cur):
         return m.tobytes()
 
 def dbDaemon(queue):
-    db = Daemon()
+    db = dbDriver()
     # atexit.register(close_db, db)
     def close_db(*args):
-        print("Close started")
+        print("Inserting rest of queue")
         while not queue.empty():
             parsed_pkt = queue.get()
             raw_dump = parsed_pkt.pop('raw')
             db.insert_packet(raw_dump, parsed_pkt)
-        print("CLose gets called")
+        print("Close gets called")
         db.close()
         exit(0)
 
@@ -44,7 +44,7 @@ def dbDaemon(queue):
         # db.close()   
 
 
-class Daemon:
+class dbDriver():
     def __init__(self):
         self.conn = psycopg2.connect('dbname=scada user=mini')
         self.cur = self.conn.cursor()

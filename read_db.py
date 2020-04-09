@@ -11,7 +11,7 @@ import sys
 
 from analyzer import PacketAnalyzer
 
-db = Daemon()
+db = dbDriver()
 print("Daemon created\n")
 pkt_raw_list = db.read_all_pkt_raw()
 pkt_features_list =  db.read_all_pkt_features()

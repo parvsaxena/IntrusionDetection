@@ -3,7 +3,7 @@ from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, TCP, UDP, ICMP, icmptypes
 from scapy.data import ETHER_TYPES
 from multiprocessing import Process, Queue
-from dbDaemon import Daemon, dbDaemon
+from dbDaemon import dbDriver, dbDaemon
 
 import argparse
 import os
@@ -70,7 +70,7 @@ class PacketAnalyzer:
             db_inserion_process.start()
         else:
             self.pqueue = None
-            self.db = Daemon()
+            self.db = dbDaemon()
         self.packet_count = 0
     #def __del__(self):
     #    pass
@@ -153,7 +153,6 @@ if __name__ == "__main__":
     parser.add_argument('--pcap', help="provide pcap to analyze", required=True)
     args = parser.parse_args()
 
-    # db = Daemon();
     pkt_analyzer = PacketAnalyzer()
     for pkt_data, pkt_metadata in RawPcapReader(args.pcap):
         count = count + 1
