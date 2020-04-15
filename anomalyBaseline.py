@@ -10,6 +10,8 @@ parser = argparse.ArgumentParser(description='Anomaly based intrusion detection 
 parser.add_argument('--interval', default=60, type=int, help='overall interval to collect in minutes')
 parser.add_argument('--buckets', default=60, type=int, help='number of buckets over interval to aggregate stats in')
 parser.add_argument('--dbName', default='scada', help='overall interval to collect in minutes')
+parser.add_argument('--statsFile', default='baseline.out', help='filename of output (pickled object)')
+parser.add_argument('--limit', default=-1, type=int, help='limit on the number of bukcets to go over')
 
 args = parser.parse_args();
 
@@ -26,6 +28,8 @@ curBucket = Bucket()
 prevIndex = n
 firstBucket = True
 
+iterations = 0
+
 for row in cur:
     # timestamp in seconds since epoch
     time = int(float(row[1])) 
@@ -37,15 +41,21 @@ for row in cur:
     
     if (index != prevIndex and prevIndex != n):
         if (not firstBucket): 
+            print("Inserting into bucket {}".format(index))
+            if (iterations >= args.limit and args.limit != -1): 
+                break
             stats.addToAvg(prevIndex, curBucket)
+            iterations += 1
         else: 
             firstBucket = False
         curBucket = Bucket()
+
 
     curBucket.update(row)
     prevIndex = index
    
 stats.print()
+stats.save(args.statsFile)
 
 conn.commit()
 conn.close()

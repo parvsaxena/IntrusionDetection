@@ -1,5 +1,10 @@
 import json
+import pickle
 from collections import defaultdict
+
+# define here to allow pickling
+def defaultVal():
+    return 0
 
 class Bucket():
     # methods for manipulating the stats of a single period
@@ -10,7 +15,7 @@ class Bucket():
         # fields corr to boolean fields in db
         self.pktCounts = {
             'has_ip'   : 0,
-           'has_tcp'  : 0,
+            'has_tcp'  : 0,
             'has_udp'  : 0,
             'has_icmp' : 0,
         }
@@ -18,8 +23,11 @@ class Bucket():
         # define fields we want to count the number of instances of each category
         # correspond to categorical fields in db
         self.categoryCounts = {
-            'ip_src' : defaultdict(lambda: 0),
-            'ip_dst' : defaultdict(lambda: 0),
+            'ip_src' : defaultdict(defaultVal),
+            'ip_dst' : defaultdict(defaultVal),
+            'udp_dst_port' : defaultdict(defaultVal),
+            'udp_dst_port' : defaultdict(defaultVal),
+            'udp_len' : defaultdict(defaultVal),
         }
 
     # Add one packet to stats
@@ -70,3 +78,7 @@ class AnomalyStats():
 
     def print(self):
         for b in self.buckets: print(b)
+
+    def save(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
