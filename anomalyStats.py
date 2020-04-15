@@ -10,7 +10,7 @@ class Bucket():
         # fields corr to boolean fields in db
         self.pktCounts = {
             'has_ip'   : 0,
-            'has_tcp'  : 0,
+           'has_tcp'  : 0,
             'has_udp'  : 0,
             'has_icmp' : 0,
         }

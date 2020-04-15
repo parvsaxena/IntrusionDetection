@@ -24,16 +24,22 @@ stats = AnomalyStats(n)
 curBucket = Bucket()
 
 prevIndex = n
+firstBucket = True
 
 for row in cur:
     # timestamp in seconds since epoch
     time = int(float(row[1])) 
+    # time = datetime.fromtimestamp(timestamp)
 
+    # TODO: convert timestamp to time to place it in correct minute bucket
     # which bucket the packet belongs to 
     index = int((time % (60 * args.interval)) // (60 * bucketInterval))
     
     if (index != prevIndex and prevIndex != n):
-        stats.addToAvg(prevIndex, curBucket)
+        if (not firstBucket): 
+            stats.addToAvg(prevIndex, curBucket)
+        else: 
+            firstBucket = False
         curBucket = Bucket()
 
     curBucket.update(row)
