@@ -91,6 +91,10 @@ class dbDriver():
         print("packet_raw exists already exists with {} rows".format(self.cur.fetchone()[0]))
         self.cur.execute("SELECT * FROM packet_feat")    
         return self.cur.fetchall()
+    
+    def read_raw_by_id(self, id):
+        self.cur.execute("SELECT * FROM packet_raw where id=" + str(id))
+        return self.cur.fetchone()
 
     def close(self):
         print("*****Closing db connection")
