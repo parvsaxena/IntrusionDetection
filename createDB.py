@@ -2,13 +2,14 @@ import psycopg2
 import sys
 import argparse
 
+db_name = "scada"
 
 parser = argparse.ArgumentParser(description='create DB script')
 parser.add_argument('--recreate', help="drop and cerate new tables", action='store_true')
 
 args = parser.parse_args()
 
-conn = psycopg2.connect('dbname=scada user=mini')
+conn = psycopg2.connect('dbname='+ db_name +' user=mini')
 #conn = psycopg2.connect("dbname='scada' user='postgres' host='localhost'")
 c = conn.cursor()
 
@@ -63,7 +64,15 @@ CREATE TABLE packet_feat (
     arp_psrc      VARCHAR(128),
     arp_pdst      VARCHAR(128),
     arp_hwsrc     VARCHAR(128),
-    arp_hwdst     VARCHAR(128)
+    arp_hwdst     VARCHAR(128),
+
+    has_ip          BOOLEAN DEFAULT FALSE,
+    has_ether       BOOLEAN DEFAULT FALSE,
+    has_tcp         BOOLEAN DEFAULT FALSE,
+    has_udp         BOOLEAN DEFAULT FALSE,
+    has_icmp        BOOLEAN DEFAULT FALSE,
+    has_arp         BOOLEAN DEFAULT FALSE,
+    is_attack_pkt   BOOLEAN DEFAULT FALSE
 );
 ''')
 

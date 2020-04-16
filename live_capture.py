@@ -6,8 +6,11 @@ from analyzer import PacketAnalyzer
 
 # Change interface with any interface from tcpdump -D, or the one where you want to monitor. Can also provide list of interfaces
 count = 0
-pkt_analyzer = PacketAnalyzer(run_in_bg = True) 
-sniff(iface='eth3', store=0, prn=pkt_analyzer.parse_packet, timeout = 600)
+pkt_analyzer = PacketAnalyzer(run_in_bg = True)
+filter = "src port not 8001"
+filter += " and dst port not 8001"
+filter += " and ip host not 128.220.221.15"
+sniff(iface='eth3', store=0, prn=pkt_analyzer.insert_packet, timeout = 7200, filter=filter)
 print("FInishing up\n")
 # for pkt in sniff(iface='wlp58s0', store=0, prn=parse_packet):
     # count = count + 1

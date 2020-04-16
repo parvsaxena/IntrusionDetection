@@ -9,7 +9,7 @@ from anomalyStats import *
 parser = argparse.ArgumentParser(description='Anomaly based intrusion detection baseline generator')
 parser.add_argument('--interval', default=60, type=int, help='overall interval to collect in minutes')
 parser.add_argument('--buckets', default=60, type=int, help='number of buckets over interval to aggregate stats in')
-parser.add_argument('--dbName', default='scada', help='overall interval to collect in minutes')
+parser.add_argument('--dbName', default='scada', help='name of database to pull statistics from')
 parser.add_argument('--statsFile', default='baseline.out', help='filename of output (pickled object)')
 parser.add_argument('--limit', default=-1, type=int, help='limit on the number of bukcets to go over')
 
@@ -22,7 +22,7 @@ cur.execute("SELECT * FROM packet_feat")
 n = args.buckets
 bucketInterval = args.interval / args.buckets # time that one bucket represents
 
-stats = AnomalyStats(n)
+stats = AnomalyStats(args.interval, n)
 curBucket = Bucket()
 
 prevIndex = n

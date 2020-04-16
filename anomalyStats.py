@@ -35,25 +35,51 @@ class Bucket():
         self.total += 1
         
         for field in self.pktCounts:
-            if (packet[field]):
+            if (field in packet) and packet[field]:
                 self.pktCounts[field] += 1 
 
 
         for field in self.categoryCounts:
+            if (field not in packet): continue
             label = packet[field]
-            if (label == None): continue
             self.categoryCounts[field][label] += 1
 
-    
+    # Get the difference of stats (other is baseline)
+    def diff(self, other):
+        ret = Bucket();
+        ret.total = self.total - other.total
+        for field in self.pktCounts:
+            ret.pktCounts[field] = self.pktCounts[field] - other.pktCounts[field]
+
+        for field in self.categoryCounts:
+            a = self.categoryCounts[field]
+            b = other.categoryCounts[field]
+            a_keys = set(a.keys())
+            b_keys = set(b.keys())
+
+            # any values that didn't appear are marked as 'other'
+            for l in b_keys.difference(a_keys):
+                ret.categoryCounts[field]['other'] += a[l]
+
+            # for all keys in baseline, find difference
+            for l in a_keys:
+                ret.categoryCounts[field][l] = a[l] - b[l];
+
+        return ret
+
+
     def __str__(self):
-        ret = "Total packets: %d" % self.total + "\n" + json.dumps(self.categoryCounts) + "\n"
-        ret += json.dumps(self.pktCounts) + "\n"
+        ret = "Total packets: %d" % self.total + "\n"
+        ret +=  json.dumps(self.categoryCounts, indent = 4) + "\n"
+        ret += json.dumps(self.pktCounts, indent = 4) + "\n"
         return ret
 
 # aggregate stats
 class AnomalyStats():
-    def __init__(self, n):
+    def __init__(self, interval, n):
         self.buckets = [Bucket() for i in range(n)]
+        self.interval = interval
+        self.n = n 
         # number of times a bucket has been added to (to compute avg) 
         self.numData = [0 for i in range(n)]
 
