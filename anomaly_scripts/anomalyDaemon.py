@@ -18,6 +18,7 @@ class PacketProcessor():
         self.prevIndex = self.n
 
     def process(self, packet):
+        
         time = packet['time']
         index = int((time % (60 * self.interval)) // (60 * self.interval / self.n))
         
@@ -26,14 +27,15 @@ class PacketProcessor():
                 self.firstBucket = False
                 return
             # print the differnce between baseline and current stats
-            print(self.cur.diff(self.baseline.buckets[self.prevIndex]))
+            # TODO something here
+            avgBucket = AnomalyStats.avg(self.baseline.buckets[self.prevIndex])
+            print(self.cur.diff(avgBucket))
             print(self.cur)
-            print(self.baseline.buckets[self.prevIndex])
+            print(avgBucket)
             self.cur = Bucket()
 
         self.cur.update(packet)
         self.prevIndex = index
-    
 
 
 def AnomalyDaemon(queue, baseline):

@@ -67,6 +67,8 @@ class Bucket():
 
         return ret
 
+    def __repr__(self):
+        return self.__str__()
 
     def __str__(self):
         ret = "Total packets: %d" % self.total + "\n"
@@ -77,33 +79,34 @@ class Bucket():
 # aggregate stats
 class AnomalyStats():
     def __init__(self, interval, n):
-        self.buckets = [Bucket() for i in range(n)]
+        self.buckets = [[] for i in range(n)]
         self.interval = interval
         self.n = n 
-        # number of times a bucket has been added to (to compute avg) 
-        self.numData = [0 for i in range(n)]
 
     # add to stats
-    def addToAvg(self, index, bkt):
-        AnomalyStats.avg(self.buckets[index], bkt, self.numData[index])
-        self.numData[index] += 1
+    def add(self, index, bkt):
+        self.buckets[index].append(bkt)
 
     @staticmethod
-    # add the values in bucket to the averages in avgbucket
-    def avg(avgBucket, bucket, n):
-        avgBucket.total = (avgBucket.total * n + bucket.total) / (n + 1)
+    # average the values in the list of buckets and return new bucket
+    def avg(buckets):
+        ret = Bucket();
+        n = len(buckets)
 
-        for field in avgBucket.pktCounts:
-            curVal = avgBucket.pktCounts[field]
-            avgBucket.pktCounts[field] = (curVal * n + bucket.pktCounts[field]) / (n + 1)
+        for bkt in buckets:
+            ret.total += bkt.total / n
 
-        for field in avgBucket.categoryCounts:
-            for label in bucket.categoryCounts[field]:
-                curVal = avgBucket.categoryCounts[field][label]
-                avgBucket.categoryCounts[field][label] = (curVal * n + bucket.categoryCounts[field][label]) / (n + 1)
+            for field in bkt.pktCounts:
+                ret.pktCounts[field] += bkt.pktCounts[field] / n
+
+            for field in bkt.categoryCounts:
+                for label in bkt.categoryCounts[field]:
+                    ret.categoryCounts[field][label] += bkt.categoryCounts[field][label] / n
+        return ret
 
     def print(self):
-        for b in self.buckets: print(b)
+        for b in self.buckets: 
+            print(b)
 
     def save(self, filename):
         with open(filename, 'wb') as f:

@@ -44,12 +44,12 @@ for row in cur:
             print("Inserting into bucket {}".format(index))
             if (iterations >= args.limit and args.limit != -1): 
                 break
-            stats.addToAvg(prevIndex, curBucket)
+            stats.add(prevIndex, curBucket)
             iterations += 1
         else: 
             firstBucket = False
+        print(index)
         curBucket = Bucket()
-
 
     curBucket.update(row)
     prevIndex = index

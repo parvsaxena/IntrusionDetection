@@ -30,7 +30,8 @@ c.execute('''
 CREATE TABLE packet_raw (
     id SERIAL PRIMARY KEY,
     time VARCHAR(128),
-    raw bytea NOT NULL
+    raw bytea NOT NULL,
+    is_training BOOLEAN DEFAULT TRUE
 );
 ''')
 
@@ -38,6 +39,7 @@ c.execute('''
 CREATE TABLE packet_feat (
     id INTEGER,
     time VARCHAR(128),
+    is_training BOOLEAN DEFAULT TRUE,
 
     ip_src VARCHAR(128),
     ip_dst VARCHAR(128),
@@ -73,6 +75,7 @@ CREATE TABLE packet_feat (
     has_icmp        BOOLEAN DEFAULT FALSE,
     has_arp         BOOLEAN DEFAULT FALSE,
     is_attack_pkt   BOOLEAN DEFAULT FALSE
+
 );
 ''')
 

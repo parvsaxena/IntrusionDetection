@@ -9,7 +9,7 @@ import argparse
 import os
 import sys
 
-from analyzer import PacketAnalyzer
+from analyzer import PacketAnalyzer, parse_packet
 
 def write(pkt):
     wrpcap('length_pkt.pcap', iter(pkt), append=True)  #appends packet to output file   
@@ -28,7 +28,7 @@ pkt_raw_list = []
 
 for id in id_list:
     pkt_raw = db.read_raw_by_id(id)
-    print(pkt_analyzer.parse_packet(Ether(pkt_raw[2]), False))
+    print (parse_packet(Ether(pkt_raw[2])))
     pkt_raw_list.append(pkt_raw[2])
     eth_pkt = Ether(pkt_raw[2])
     eth_pkt.show()
@@ -42,7 +42,7 @@ for id in id_list:
     del eth_pkt[UDP].chksum
     eth_pkt.show2(dump=False)
     
-    sendp(eth_pkt, iface='eth2', count = 100, return_packets = True)
+    # sendp(eth_pkt, iface='eth2', count = 100, return_packets = True)
 
 # Write the list to pcap
 write(pkt_raw_list)

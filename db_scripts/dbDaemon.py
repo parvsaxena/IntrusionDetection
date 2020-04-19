@@ -1,7 +1,7 @@
 import psycopg2
 from multiprocessing import Process, Queue
 import atexit, os, signal
-query1 = "INSERT INTO packet_raw (raw, time) VALUES (%s, %s) RETURNING id"
+query1 = "INSERT INTO packet_raw (raw, time, is_training) VALUES (%s, %s, %s) RETURNING id"
 
 query2 = "WITH row AS ({}) \
           INSERT INTO packet_feat (id, {}) \
@@ -18,6 +18,7 @@ def bytea2bytes(value, cur):
 
 def dbDaemon(queue, dbName="scada"):
     db = dbDriver(dbName)
+    print("Daemon created")
     # atexit.register(close_db, db)
     def close_db(*args):
         print("Inserting rest of queue")
@@ -33,7 +34,9 @@ def dbDaemon(queue, dbName="scada"):
     signal.signal(signal.SIGTERM, close_db)
   
     while True:
+        # print("Getting from queue")
         parsed_pkt = queue.get()
+        # print("dict is", parsed_pkt)
         raw_dump = parsed_pkt.pop('raw')
         db.insert_packet(raw_dump, parsed_pkt)
 
@@ -51,7 +54,7 @@ class dbDriver():
     def insert_packet(self, raw, features, retry=False):
         # print("**********Insertion called") 
         try:
-            subquery = self.cur.mogrify(query1, (raw, features['time']))
+            subquery = self.cur.mogrify(query1, (raw, features['time'], features['is_training']))
             subquery = subquery.decode()
 
             cols = features.keys()
@@ -70,7 +73,7 @@ class dbDriver():
             self.cur.close()    
             self.cur = conn.cursor()
             self.insert_packet(raw, features, True)
-    
+   
     def read_one_pkt_raw(self):
         # self.cur.execute("SELECT COUNT(*) FROM packet_raw")
         # print("packet_raw exists already exists with {} rows".format(self.cur.fetchone()[0]))

