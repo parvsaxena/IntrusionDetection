@@ -9,32 +9,35 @@ from anomalyStats import *
 class PacketProcessor():
     def __init__(self, baseline):
         # for convenience
+        self.baseline = baseline
         self.interval = baseline.interval
         self.n = baseline.n
-        self.baseline = baseline
 
-        self.cur = Bucket()
+        self.curBkt = Bucket()
         self.firstBucket = True
-        self.prevIndex = self.n
+        self.prevIndex = -1
 
     def process(self, packet):
-        
         time = packet['time']
-        index = int((time % (60 * self.interval)) // (60 * self.interval / self.n))
-        
-        if (index != self.prevIndex and self.prevIndex != self.n):
-            if (self.firstBucket):
-                self.firstBucket = False
-                return
-            # print the differnce between baseline and current stats
-            # TODO something here
-            avgBucket = AnomalyStats.avg(self.baseline.buckets[self.prevIndex])
-            print(self.cur.diff(avgBucket))
-            print(self.cur)
-            print(avgBucket)
-            self.cur = Bucket()
+        index = int((time % self.interval) // (self.interval / self.n))
+        if (self.prevIndex != -1 and index != self.prevIndex and index != (self.prevIndex + 1) % self.n):
+            print("out of order packet")
+            return
 
-        self.cur.update(packet)
+        if (index != self.prevIndex and self.prevIndex != -1):
+            if (not self.firstBucket):
+                # print the differnce between baseline and current stats
+                # TODO something here
+                avgBucket = self.baseline.avg(index)
+                print("Bucket Num=",index)
+                print(self.curBkt.diff(avgBucket))
+                # print(self.cur)
+                # print(avgBucket)
+                self.curBkt = Bucket()
+            else:
+                self.firstBucket = False
+
+        self.curBkt.update(packet)
         self.prevIndex = index
 
 

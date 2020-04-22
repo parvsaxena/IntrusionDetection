@@ -6,53 +6,64 @@ from datetime import datetime
 
 from anomalyStats import *
 
+# Parse command line args
 parser = argparse.ArgumentParser(description='Anomaly based intrusion detection baseline generator')
 parser.add_argument('--interval', default=60, type=int, help='overall interval to collect in minutes')
 parser.add_argument('--buckets', default=60, type=int, help='number of buckets over interval to aggregate stats in')
 parser.add_argument('--dbName', default='scada', help='name of database to pull statistics from')
 parser.add_argument('--statsFile', default='baseline.out', help='filename of output (pickled object)')
-parser.add_argument('--limit', default=-1, type=int, help='limit on the number of bukcets to go over')
 
 args = parser.parse_args();
+# convert interval to seconds
+args.interval = 60 * args.interval
 
+
+# set up db
 conn = psycopg2.connect('dbname={} user=mini'.format(args.dbName))
+firstCur = conn.cursor()
 cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
+# setup the cursor
 cur.execute("SELECT * FROM packet_feat")
 
+# get the time of the first packet
+firstCur.execute("SELECT time FROM packet_feat WHERE time = (SELECT MIN(time) FROM packet_feat);")
+if (firstCur.rowcount == 0):
+    printf("No rows in packet_feat!")
+    exit(1)
+minTime = int(float(firstCur.fetchone()[0]))
+firstCur.execute("SELECT time FROM packet_feat WHERE time = (SELECT MAX(time) FROM packet_feat);")
+maxTime = int(float(firstCur.fetchone()[0]))
+firstCur.close()
+
+# round minTime/maxTime to nearest interval
+minTime = (minTime // (args.interval)) * args.interval
+maxTime = (maxTime // (args.interval)) * args.interval
+
+
+# m is number of total intervals (ie. hours by default), nubmer of buckets at each slot
+# n is number of bukcet per interval 
+# time that one bucket represents
+# our data is an m x n array of buckets
+m = 1 + (maxTime - minTime) // args.interval
 n = args.buckets
-bucketInterval = args.interval / args.buckets # time that one bucket represents
+bucketInterval = args.interval / args.buckets
+stats = AnomalyStats(args.interval, m, n)
 
-stats = AnomalyStats(args.interval, n)
-curBucket = Bucket()
+print("constants")
+print(m, n, bucketInterval, stats)
 
-prevIndex = n
+# Start looking at table
+prevIndex = -1
 firstBucket = True
-
 iterations = 0
 
 for row in cur:
-    # timestamp in seconds since epoch
-    time = int(float(row[1])) 
-    # time = datetime.fromtimestamp(timestamp)
-
-    # TODO: convert timestamp to time to place it in correct minute bucket
-    # which bucket the packet belongs to 
-    index = int((time % (60 * args.interval)) // (60 * bucketInterval))
+    # timestamp in seconds since minTime 
+    time = int(float(row[1])) - minTime    
+    index = int(time / bucketInterval)
     
-    if (index != prevIndex and prevIndex != n):
-        if (not firstBucket): 
-            print("Inserting into bucket {}".format(index))
-            if (iterations >= args.limit and args.limit != -1): 
-                break
-            stats.add(prevIndex, curBucket)
-            iterations += 1
-        else: 
-            firstBucket = False
-        print(index)
-        curBucket = Bucket()
-
-    curBucket.update(row)
-    prevIndex = index
+    # update appropriate packet
+    stats.update(row, index) 
    
 stats.print()
 stats.save(args.statsFile)
