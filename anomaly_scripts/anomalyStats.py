@@ -19,6 +19,8 @@ class Bucket():
             'has_tcp'  : 0,
             'has_udp'  : 0,
             'has_icmp' : 0,
+            'has_arp'  : 0,
+            'has_ether': 0,
         }
 
         # define fields we want to count the number of instances of each category
@@ -26,9 +28,11 @@ class Bucket():
         self.categoryCounts = {
             'ip_src' : defaultdict(defaultVal),
             'ip_dst' : defaultdict(defaultVal),
-            'udp_dst_port' : defaultdict(defaultVal),
+            'udp_src_port' : defaultdict(defaultVal),
             'udp_dst_port' : defaultdict(defaultVal),
             'udp_len' : defaultdict(defaultVal),
+            'mac_src' : defaultdict(defaultVal),
+            'mac_dst' : defaultdict(defaultVal),
         }
 
     def isZero(self):
