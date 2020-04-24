@@ -66,9 +66,9 @@ def featurize(known, bucket):
     row = []
 
     row.append(bucket.total)
-    row += [count for field, count in bucket.pktCounts.items()]
+    row += [count for field, count in sorted(bucket.pktCounts.items())]
 
-    for field, counts in bucket.categoryCounts.items():
+    for field, counts in sorted(bucket.categoryCounts.items()):
         row_section = None
         known_vals = None
 
