@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./../anomaly_scripts/')
+sys.path.append('./../../anomaly_scripts/')
 
 import argparse
 import numpy as np
@@ -65,7 +65,7 @@ def get_feature_names(known, bucket):
 def featurize(known, bucket):
     row = []
 
-    row.append(b.total)
+    row.append(bucket.total)
     row += [count for field, count in bucket.pktCounts.items()]
 
     for field, counts in bucket.categoryCounts.items():
@@ -99,7 +99,8 @@ if __name__ == "__main__":
 
     # Parse command line args
     parser = argparse.ArgumentParser(description='Generate feature vector from vector of baseline measurements')
-    parser.add_argument('--baseline', default='../anomaly_scripts/baseline.out', help='pickled baseline object')
+    parser.add_argument('--baseline', default='../../anomaly_scripts/baseline.out', help='pickled baseline object')
+    parser.add_argument('--output', default='./aggregate_features.pkl', help='pickled baseline object')
 
     args = parser.parse_args();
 
@@ -161,5 +162,5 @@ if __name__ == "__main__":
     print(names)
     #print(data)
     # save array
-    with open("train_data.out", "wb") as f:
+    with open(args.output, "wb") as f:
         pickle.dump((known, names, data), f)
