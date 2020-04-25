@@ -26,7 +26,7 @@ f = open(args.features, "rb")
 start=time.time()
 
 if (args.algorithm == 'lof'):
-    clf=LocalOutlierFactor(n_neighbors=5,novelty=True,metric='cosine')
+    clf=LocalOutlierFactor(n_neighbors=40,novelty=True,metric='cosine')
     clf.fit(data)
     X_scores = clf.negative_outlier_factor_
     print(X_scores)

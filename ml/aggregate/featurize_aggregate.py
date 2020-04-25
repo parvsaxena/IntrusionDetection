@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 
 import pickle
+import sklearn
 
 # get the set of known/unknown labels for udp fields by seeing which
 # values are common across all buckets
@@ -150,16 +151,21 @@ if __name__ == "__main__":
     known['ip'] = ips
     known['mac'] = macs
 
-    print(known)
+    #print(known)
 
     # build array
     data = []
     for b in bkts:
         data.append(featurize(known, b))
     
+    data = np.array(data)
+    data = sk
+
     names = get_feature_names(known, bkts[0])
 
     print(names)
+    print(len(names))
+    print("number of data points:", len(data))
     #print(data)
     # save array
     with open(args.output, "wb") as f:
