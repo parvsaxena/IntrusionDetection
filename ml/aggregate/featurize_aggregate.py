@@ -1,11 +1,10 @@
 import sys
-sys.path.append('./../../anomaly_scripts/')
 
 import argparse
 import numpy as np
 
 import pickle
-import sklearn
+import sklearn.preprocessing
 
 # get the set of known/unknown labels for udp fields by seeing which
 # values are common across all buckets
@@ -100,7 +99,7 @@ if __name__ == "__main__":
 
     # Parse command line args
     parser = argparse.ArgumentParser(description='Generate feature vector from vector of baseline measurements')
-    parser.add_argument('--baseline', default='../../anomaly_scripts/baseline.out', help='pickled baseline object')
+    parser.add_argument('--baseline', default='./baseline.out', help='pickled baseline object')
     parser.add_argument('--output', default='./aggregate_features.pkl', help='pickled baseline object')
 
     args = parser.parse_args();
@@ -159,14 +158,13 @@ if __name__ == "__main__":
         data.append(featurize(known, b))
     
     data = np.array(data)
-    data = sk
-
+    data = sklearn.preprocessing.normalize(data)
     names = get_feature_names(known, bkts[0])
 
     print(names)
     print(len(names))
     print("number of data points:", len(data))
-    #print(data)
+    print(data)
     # save array
     with open(args.output, "wb") as f:
         pickle.dump((known, names, data), f)

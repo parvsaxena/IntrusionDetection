@@ -5,6 +5,7 @@ import argparse
 
 import pickle
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.model_selection import train_test_split
 from sklearn import svm
 
 
@@ -25,15 +26,26 @@ f = open(args.features, "rb")
 
 start=time.time()
 
+# Split data
+train, test = train_test_split(data, test_size=0.2)
+
 if (args.algorithm == 'lof'):
-    clf=LocalOutlierFactor(n_neighbors=40,novelty=True,metric='cosine')
-    clf.fit(data)
+    clf=LocalOutlierFactor(n_neighbors=30,novelty=True)
+    clf.fit(train)
     X_scores = clf.negative_outlier_factor_
     print(X_scores)
 elif (args.algorithm == 'svm'):
-    clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
-    clf.fit(data)
-    print(clf.predict(data))
+    clf = svm.OneClassSVM()
+    clf.fit(train)
+
+
+results = clf.predict(test)
+num_correct = np.count_nonzero(results + 1)
+print('{}/{} of test data correct {:.2f}'.format(
+    num_correct, 
+    len(results), 
+    num_correct/len(results)
+))
 
 pickle.dump(clf, open(args.model, 'wb'))
 end=time.time()

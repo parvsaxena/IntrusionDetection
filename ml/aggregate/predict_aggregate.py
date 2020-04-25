@@ -1,21 +1,29 @@
 import pickle
+import json
 import sys
 import numpy as np
-sys.path.append('./../../anomaly_scripts/')
 
 from featurize_aggregate import featurize 
 
-class LOFAggregateProcessor():
-    def __init__(self, model, data):
+class MLPredictor(Predictor):
+    names = None
+    known = None
+
+    @staticmethod
+    def loadKnown(data):
+        (MLPredictor.known, MLPredictor.names, _) = pickle.load(open(data, 'rb'))
+
+    def __init__(self, model):
+        if (MLPredictor.known is None):
+            raise Exception("MLPredictor: call loadKnown() before making and instance!")
         self.clf = pickle.load(open(model, 'rb'))
-        (known, names, data) = pickle.load(open(data, 'rb'))
-        self.known = known
-        self.data = data
        
-    def process(self, bucket):
-        vec = featurize(self.known, bucket)
-        #print(vec)
-        #print(self.data[0])
+    def predict(self, bucket):
+        if (MLPredictor.known is None):
+            raise Exception("MLPredictor: call loadKnown() before prediction (needs it to featurize)")
+
+        vec = featurize(MLPredictor.known, bucket)
+        print(json.dumps({n:v for n, v in zip(MLPredictor.names, vec)}, indent=4))
 
         nd_vals = np.array(vec).reshape(1, -1)
         prediction=self.clf.predict(nd_vals)
@@ -23,11 +31,13 @@ class LOFAggregateProcessor():
         print("Prediction=",prediction[0])
 
 
+# test predictor on baseline buckets
 if __name__ == '__main__':
-    processor = LOFAggregateProcessor("aggregate_model.pkl", "aggregate_features.pkl")
+    # Load known ips and feature anes
+    MLPredictor.loadKnown("aggregate_features.pkl")
+    predictor = MLPredictor("aggregate_model.pkl")
 
-
-    f = open("../../anomaly_scripts/baseline.out", "rb")
+    f = open("./baseline.out", "rb")
     baseline = pickle.load(f)
 
     # Flatten buckets from baseline
@@ -41,4 +51,5 @@ if __name__ == '__main__':
 
 
     for b in bkts:
-        processor.process(b)
+        predictor.predict(b)
+

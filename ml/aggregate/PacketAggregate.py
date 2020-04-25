@@ -77,9 +77,12 @@ class Bucket():
             a_keys = set(a.keys())
             b_keys = set(b.keys())
 
+            other = 0
             # any values that didn't appear are marked as 'other'
             for l in b_keys.difference(a_keys):
-                ret.categoryCounts[field]['other'] += a[l]
+                other += b[l]
+
+            ret.categoryCounts[field]['other'] = other
 
             # for all keys in baseline, find difference
             for l in a_keys:

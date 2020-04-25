@@ -23,10 +23,10 @@ conn = psycopg2.connect('dbname={} user=mini'.format(args.dbName))
 firstCur = conn.cursor()
 cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
 # setup the cursor
-cur.execute("SELECT * FROM packet_feat")
+cur.execute("SELECT * FROM sahiti_feat")
 
 # get the time of the first packet
-firstCur.execute("SELECT time FROM packet_feat WHERE time = (SELECT MIN(time) FROM packet_feat);")
+firstCur.execute("SELECT time FROM sahiti_feat WHERE time = (SELECT MIN(time) FROM packet_feat);")
 if (firstCur.rowcount == 0):
     printf("No rows in packet_feat!")
     exit(1)
@@ -47,7 +47,7 @@ maxTime = (maxTime // (args.interval)) * args.interval
 m = 1 + (maxTime - minTime) // args.interval
 n = args.buckets
 bucketInterval = args.interval / args.buckets
-stats = AnomalyStats(args.interval, m, n)
+stats = PacketAggregate(args.interval, m, n)
 
 print("constants")
 print(m, n, bucketInterval, stats)

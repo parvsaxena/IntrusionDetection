@@ -3,11 +3,12 @@ from datetime import datetime
 from multiprocessing import Process, Queue
 
 from PacketAggregate import *
+from predict_aggregate import MLPredictor
 
 
 # Process packets and compare to 
 class Processor():
-    def __init__(self, baseline):
+    def __init__(self, baseline, models):
         # for convenience
         self.baseline = baseline
         self.interval = baseline.interval
@@ -32,7 +33,11 @@ class Processor():
                 print("Bucket Num=",index)
                 print(self.curBkt.diff(avgBucket))
                 # print(self.cur)
-                # print(avgBucket)
+                # print(avgBucket)`
+
+                for m in models:
+                    m.predict(self.curBkt)
+
                 self.curBkt = Bucket()
             else:
                 self.firstBucket = False
@@ -41,8 +46,21 @@ class Processor():
         self.prevIndex = index
 
 
-def AggregateDaemon(queue, baseline):
-    p = Processor(baseline)
+# Starts an aggregate daemon
+#   baseline: The name of the baseline file (output of generate_baseline.py)
+#   data: the pickled data (output of featurize_baseline.py)
+#   models: list of filenames containing models  (output of train_baseline.py)
+# Example usage
+# aggregateDaemon(None, "baseline.out", "aggregate_features.pkl", ["aggregate_model.pkl"])
+def aggregateDaemon(queue, baseline, data, models):
+    baseline = pickle.load(open(baseline, 'rb')) 
+    MLPredictor.loadKnown(data)
+
+    predictors = []
+    for filename in models:
+        predictors.append(pickle.load(open(filename, 'rb')))
+
+    p = Processor(baseline, models)
 
     while True:
         pkt = queue.get()
