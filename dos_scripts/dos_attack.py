@@ -10,7 +10,7 @@ class DOSAttack:
     def __init__(self):
         pass
     
-    def start_attack(self, src_list, target_list, pkt_len, inter, cnt=1):
+    def start_attack(self, src_list, target_list, pkt_len, inter, cnt=100):
         # By default ether type is ipv4
         # TODO: Crosscheck if ether type should be 0x800 or IPv4
         # TODO: Raw len vs pkt len - sorted, same.
@@ -41,4 +41,4 @@ class DOSAttack:
 
 if __name__ == "__main__":
     attack = DOSAttack()
-    attack.start_attack(src_list=["mini3", "mini2"], target_list=["scada1", "scada2"], pkt_len=100, inter=1)
+    attack.start_attack(src_list=["scada1"], target_list=["mini1", "mini2", "mini3"], pkt_len=100, inter=0.0001, cnt=5000)
