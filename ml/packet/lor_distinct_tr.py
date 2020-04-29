@@ -5,14 +5,13 @@ from psycopg2.extras import DictCursor
 from  __init__ import *
 import pickle
 from sklearn.neighbors import LocalOutlierFactor
-
-
+from sklearn.preprocessing import StandardScaler
 
 if  __name__=='__main__':
     start=time.time()
     
     conn=psycopg2.connect('dbname={} user=mini'.format("scada"))
-
+    """
     col_cursor = conn.cursor()
     col_query = "select column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'per_packet';"
     col_cursor.execute(col_query)
@@ -23,7 +22,7 @@ if  __name__=='__main__':
         f=col[0]
         fields[index]=f
     print(fields.values())
-    
+    """
     fields2={}
     for index,col in enumerate(distinct_cols):
         fields2[index]=col
@@ -37,6 +36,10 @@ if  __name__=='__main__':
     for row in cur:
         vec=row
         vecs.append(vec)
+        print(vec)
+    scaler=StandardScaler()
+    scaler.fit(vecs)
+    vecs=scaler.transform(vecs)
     end=time.time()
     conn.close()
     print(end-start)   
@@ -44,13 +47,13 @@ if  __name__=='__main__':
     for vec in vecs:
         print(vec)
     start=time.time()
-    clf=LocalOutlierFactor(n_neighbors=2,novelty=True,metric='cosine')
+    clf=LocalOutlierFactor(n_neighbors=2,novelty=True,metric='euclidean')
     clf.fit(vecs)
     print("Fitting done")
     pkl_filename = "lor_distinct_model.pkl"
-    # with open(pkl_filename, 'wb') as file:
-    #     pickle.dump(clf, file)
     pickle.dump(clf, open(pkl_filename, 'wb'))
+    pkl_scaler = "lor_scaler.pkl"
+    pickle.dump(scaler, open(pkl_scaler, 'wb'))
     end=time.time()
     # print(end-start) 
   
