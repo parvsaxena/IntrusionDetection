@@ -37,14 +37,14 @@ def place_feature(known, feature, value, row_section):
         row_section[known.index(feature)] = value
     # Other
     else:
-        row_section[len(known)] += value
+        row_section[-1] += value
         
 def get_feature_names(known, bucket):
     names = []
     names.append('total')
-    names += [field for field in bucket.pktCounts]
+    names += [field for field in sorted(bucket.pktCounts)]
 
-    for field, counts in bucket.categoryCounts.items():
+    for field, counts in sorted(bucket.categoryCounts.items()):
         section = []
         feat = None
         if (field == 'ip_src' or field == 'ip_dst'):
@@ -58,7 +58,6 @@ def get_feature_names(known, bucket):
         names += section + [field + '/other']
 
     return names
-
 
 # Converts a bucket of packet counts into a feature vector, given a list of known
 # ips, macs, udp ports and lens. (counts other lengths as 'other')
@@ -158,13 +157,14 @@ if __name__ == "__main__":
         data.append(featurize(known, b))
     
     data = np.array(data)
-    data = sklearn.preprocessing.normalize(data)
+    #data = sklearn.preprocessing.normalize(data)
     names = get_feature_names(known, bkts[0])
 
     print(names)
     print(len(names))
     print("number of data points:", len(data))
     print(data)
+    print({n:v for n, v in zip(names, data[0])})
     # save array
     with open(args.output, "wb") as f:
         pickle.dump((known, names, data), f)

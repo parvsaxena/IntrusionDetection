@@ -46,23 +46,24 @@ class Bucket():
             if (field in packet) and packet[field]:
                 self.pktCounts[field] += 1 
 
-
         for field in self.categoryCounts:
-            if (field not in packet): continue
-            label = packet[field]
-            self.categoryCounts[field][label] += 1
+            if (field not in packet):
+                self.categoryCounts[field][None] += 1
+            else:
+                label = packet[field]
+                self.categoryCounts[field][label] += 1
 
 
-    # mutliply each element by c
+    # mutliply each element by c and round
     def scale(self, c):
-        self.total *= c
+        self.total = int(c * self.total)
 
         for field in self.pktCounts:
-            self.pktCounts[field] *= c
+            self.pktCounts[field] = int(c * self.pktCounts[field])
 
         for field in self.categoryCounts:
             for label in self.categoryCounts[field]:
-                self.categoryCounts[field][label] *= c
+                self.categoryCounts[field][label] = int(c * self.categoryCounts[field][label])
 
     # Get the difference of stats (other is baseline)
     def diff(self, other):
@@ -77,15 +78,15 @@ class Bucket():
             a_keys = set(a.keys())
             b_keys = set(b.keys())
 
-            other = 0
+            otherCount = 0
             # any values that didn't appear are marked as 'other'
-            for l in b_keys.difference(a_keys):
-                other += b[l]
+            for l in a_keys.difference(b_keys):
+                otherCount += a[l]
 
-            ret.categoryCounts[field]['other'] = other
+            ret.categoryCounts[field]['other'] = otherCount
 
             # for all keys in baseline, find difference
-            for l in a_keys:
+            for l in b_keys:
                 ret.categoryCounts[field][l] = a[l] - b[l];
 
         return ret
@@ -95,7 +96,8 @@ class Bucket():
 
     def __str__(self):
         ret = "Total packets: %d" % self.total + "\n"
-        ret +=  json.dumps(self.categoryCounts, indent = 4) + "\n"
+        ret += "ip_src: " json.dumps(self.categoryCounts['ip_src'], indent = 4) + "\n"
+        ret += "ip_dst: "json.dumps(self.categoryCounts['ip_dst'], indent = 4) + "\n"
         ret += json.dumps(self.pktCounts, indent = 4) + "\n"
         return ret
 

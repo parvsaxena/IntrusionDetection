@@ -12,6 +12,7 @@ parser.add_argument('--interval', default=60, type=int, help='overall interval t
 parser.add_argument('--buckets', default=60, type=int, help='number of buckets over interval to aggregate stats in')
 parser.add_argument('--dbName', default='scada', help='name of database to pull statistics from')
 parser.add_argument('--statsFile', default='baseline.out', help='filename of output (pickled object)')
+parser.add_argument('--table', default='packet_feat', help='table to look at')
 
 args = parser.parse_args();
 # convert interval to seconds
@@ -23,15 +24,15 @@ conn = psycopg2.connect('dbname={} user=mini'.format(args.dbName))
 firstCur = conn.cursor()
 cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
 # setup the cursor
-cur.execute("SELECT * FROM sahiti_feat")
+cur.execute("SELECT * FROM {}".format(args.table))
 
 # get the time of the first packet
-firstCur.execute("SELECT time FROM sahiti_feat WHERE time = (SELECT MIN(time) FROM packet_feat);")
+firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MIN(time) FROM {0});".format(args.table))
 if (firstCur.rowcount == 0):
     printf("No rows in packet_feat!")
     exit(1)
 minTime = int(float(firstCur.fetchone()[0]))
-firstCur.execute("SELECT time FROM sahiti_feat WHERE time = (SELECT MAX(time) FROM packet_feat);")
+firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MAX(time) FROM {0});".format(args.table))
 maxTime = int(float(firstCur.fetchone()[0]))
 firstCur.close()
 
@@ -61,7 +62,7 @@ for row in cur:
     # timestamp in seconds since minTime 
     time = int(float(row[1])) - minTime    
     index = int(time / bucketInterval)
-    
+
     # update appropriate packet
     stats.update(row, index) 
    

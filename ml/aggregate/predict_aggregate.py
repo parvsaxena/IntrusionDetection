@@ -5,7 +5,7 @@ import numpy as np
 
 from featurize_aggregate import featurize 
 
-class MLPredictor(Predictor):
+class MLPredictor():
     names = None
     known = None
 
@@ -23,12 +23,12 @@ class MLPredictor(Predictor):
             raise Exception("MLPredictor: call loadKnown() before prediction (needs it to featurize)")
 
         vec = featurize(MLPredictor.known, bucket)
-        print(json.dumps({n:v for n, v in zip(MLPredictor.names, vec)}, indent=4))
+        #print(json.dumps({n:v for n, v in zip(MLPredictor.names, vec)}, indent=4))
 
         nd_vals = np.array(vec).reshape(1, -1)
         prediction=self.clf.predict(nd_vals)
+        return prediction
 
-        print("Prediction=",prediction[0])
 
 
 # test predictor on baseline buckets
@@ -48,7 +48,6 @@ if __name__ == '__main__':
             if (b.isZero()):
                 continue
             bkts.append(b)
-
 
     for b in bkts:
         predictor.predict(b)
