@@ -1,27 +1,39 @@
 import argparse
+import numpy as np
+
 from datetime import datetime
 from multiprocessing import Process, Queue
 
 from PacketAggregate import *
 from predict_aggregate import MLPredictor
+from featurize_aggregate import featurize
 
 
 # Process packets and compare to 
 class AggregateProcessor():
-    def __init__(self, baseline, models, data, output_file):
-        
-        self.out = open(output_file, 'w+')
-        # for convenience
-        
-        # MLPredictor.loadKnown(data)
-        print("Aggregate Predictor Started", flush=True, file=self.out)
-        MLPredictor.loadKnown("./../ml/aggregate/aggregate_features.pkl")
-        # print(baseline, flush=True, file=self.out)
-        # print(models, flush=True, file=self.out)
-        self.baseline = pickle.load(open(baseline, 'rb'))
-        self.interval = self.baseline.interval
-        self.n = self.baseline.n
 
+    # Given the filenames of data/output log, creates processor
+    #   baseline    - output of generate_aggregate.py 
+    #   models      - output of train_aggregate.py
+    #   data        - output of featurize_aggregate.py
+    #   output_file - file that this prints to
+    def __init__(self, baseline, models, data, output_file):
+        self.out = open(output_file, 'w+')
+        
+        print("Aggregate Predictor Started", flush=True, file=self.out)
+
+        # Load training data so we can make comparisons
+        (self.known, self.names, data) = pickle.load(open(data, 'rb'))
+
+        self.avg = np.average(data, axis = 0)
+        self.std = np.std(data, axis = 0)
+
+        # Load baseline because we need to know bucket size 
+        baseline = pickle.load(open(baseline, 'rb'))
+        self.interval = baseline.interval
+        self.n = baseline.n
+
+        # Initialize current bucket and variables to keep track of it
         self.curBkt = Bucket()
         self.firstBucket = True
         self.prevIndex = -1
@@ -31,8 +43,24 @@ class AggregateProcessor():
             self.predictors.append(MLPredictor(filename))
 
 
-    def printDiff(baseline, bucket):
-        pass
+    def printDiff(self, vec):
+        for (field, val, mu, sigma) in zip(self.names, vec, self.avg, self.std):
+            # don't print out fields that have small differences
+            if (sigma == 0):
+                if (abs(val - mu) <= 1):
+                    continue
+            elif (abs((val - mu) / sigma) <= 1.5):
+                continue
+
+
+            template = "  {0:30} - {1:5d} packets compared to avg of {2:5.0f} ({3:+.0f} packets)"
+            template = template.format(field, val, mu, val - mu)
+            if (sigma != 0):
+                template += " ({0:+.2f} stddevs)"
+                template = template.format((val - mu) / sigma)
+
+            print(template, flush=True, file=self.out)
+        
 
     def process(self, packet):
         time = packet['time']
@@ -44,15 +72,16 @@ class AggregateProcessor():
         if (index != self.prevIndex and self.prevIndex != -1):
             if (not self.firstBucket):
                 # Predict using ml algorithms and show the diff if the majority predict abnormal
-                
+                features = featurize(self.known, self.curBkt)
+
                 num_abnormal = 0
                 for p in self.predictors:
-                    if (p.predict(self.curBkt) == -1):
+                    if (p.predict(features) == -1):
                         num_abnormal = 1;
 
                 if (num_abnormal > len(self.predictors) // 2):
                     print("Last minute predicted abnormal:", flush=True, file=self.out)
-                    printDiff(self.baseline, self.curBkt)
+                    self.printDiff(features)
 
                 else:
                     print("Last minute predicted normal.", flush=True, file=self.out)

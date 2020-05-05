@@ -96,8 +96,8 @@ class Bucket():
 
     def __str__(self):
         ret = "Total packets: %d" % self.total + "\n"
-        ret += "ip_src: " json.dumps(self.categoryCounts['ip_src'], indent = 4) + "\n"
-        ret += "ip_dst: "json.dumps(self.categoryCounts['ip_dst'], indent = 4) + "\n"
+        ret += "ip_src: " +  json.dumps(self.categoryCounts['ip_src'], indent = 4) + "\n"
+        ret += "ip_dst: " + json.dumps(self.categoryCounts['ip_dst'], indent = 4) + "\n"
         ret += json.dumps(self.pktCounts, indent = 4) + "\n"
         return ret
 

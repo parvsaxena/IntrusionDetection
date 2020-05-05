@@ -9,24 +9,12 @@ class MLPredictor():
     names = None
     known = None
 
-    @staticmethod
-    def loadKnown(data):
-        (MLPredictor.known, MLPredictor.names, _) = pickle.load(open(data, 'rb'))
-
     def __init__(self, model):
-        if (MLPredictor.known is None):
-            raise Exception("MLPredictor: call loadKnown() before making and instance!")
         self.clf = pickle.load(open(model, 'rb'))
        
-    def predict(self, bucket):
-        if (MLPredictor.known is None):
-            raise Exception("MLPredictor: call loadKnown() before prediction (needs it to featurize)")
-
-        vec = featurize(MLPredictor.known, bucket)
-        #print(json.dumps({n:v for n, v in zip(MLPredictor.names, vec)}, indent=4))
-
+    def predict(self, vec):
         nd_vals = np.array(vec).reshape(1, -1)
-        prediction=self.clf.predict(nd_vals)
+        prediction = self.clf.predict(nd_vals)
         return prediction
 
 
@@ -34,7 +22,7 @@ class MLPredictor():
 # test predictor on baseline buckets
 if __name__ == '__main__':
     # Load known ips and feature anes
-    MLPredictor.loadKnown("aggregate_features.pkl")
+    (known, names, _) = pickle.load(open("aggregate_features.pkl", 'rb'))
     predictor = MLPredictor("aggregate_model.pkl")
 
     f = open("./baseline.out", "rb")
@@ -50,5 +38,6 @@ if __name__ == '__main__':
             bkts.append(b)
 
     for b in bkts:
-        predictor.predict(b)
+        print(predictor.predict(featurize(known, b)))
+
 
