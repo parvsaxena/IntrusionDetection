@@ -8,7 +8,6 @@ from PacketAggregate import *
 from predict_aggregate import MLPredictor
 from featurize_aggregate import featurize
 
-
 # Process packets and compare to 
 class AggregateProcessor():
 
@@ -44,19 +43,19 @@ class AggregateProcessor():
 
 
     def printDiff(self, vec):
+
         for (field, val, mu, sigma) in zip(self.names, vec, self.avg, self.std):
             # don't print out fields that have small differences
             if (sigma == 0):
                 if (abs(val - mu) <= 1):
                     continue
-            elif (abs((val - mu) / sigma) <= 1.5):
+            elif (abs((val - mu) / sigma) <= 2.0):
                 continue
 
-
-            template = "  {0:30} - {1:5d} packets compared to avg of {2:5.0f} ({3:+.0f} packets)"
+            template = "  {0:30} - cur {1:5d}, avg {2:5.0f} ({3:+.0f})"
             template = template.format(field, val, mu, val - mu)
             if (sigma != 0):
-                template += " ({0:+.2f} stddevs)"
+                template += " ({0:+.2f} stds)"
                 template = template.format((val - mu) / sigma)
 
             print(template, flush=True, file=self.out)

@@ -35,6 +35,11 @@ class Bucket():
             'mac_dst' : defaultdict(defaultVal),
         }
 
+        self.flows = {
+            ('ip_src', 'ip_dst') : defaultdict(defaultVal),
+            ('mac_src', 'mac_dst') : defaultdict(defaultVal),
+        }
+
     def isZero(self):
         return self.total == 0
 
@@ -46,50 +51,16 @@ class Bucket():
             if (field in packet) and packet[field]:
                 self.pktCounts[field] += 1 
 
-        for field in self.categoryCounts:
+        for field, d in self.categoryCounts.items():
             if (field not in packet):
-                self.categoryCounts[field][None] += 1
+                d[None] += 1
             else:
                 label = packet[field]
-                self.categoryCounts[field][label] += 1
+                d[label] += 1
 
-
-    # mutliply each element by c and round
-    def scale(self, c):
-        self.total = int(c * self.total)
-
-        for field in self.pktCounts:
-            self.pktCounts[field] = int(c * self.pktCounts[field])
-
-        for field in self.categoryCounts:
-            for label in self.categoryCounts[field]:
-                self.categoryCounts[field][label] = int(c * self.categoryCounts[field][label])
-
-    # Get the difference of stats (other is baseline)
-    def diff(self, other):
-        ret = Bucket();
-        ret.total = self.total - other.total
-        for field in self.pktCounts:
-            ret.pktCounts[field] = self.pktCounts[field] - other.pktCounts[field]
-
-        for field in self.categoryCounts:
-            a = self.categoryCounts[field]
-            b = other.categoryCounts[field]
-            a_keys = set(a.keys())
-            b_keys = set(b.keys())
-
-            otherCount = 0
-            # any values that didn't appear are marked as 'other'
-            for l in a_keys.difference(b_keys):
-                otherCount += a[l]
-
-            ret.categoryCounts[field]['other'] = otherCount
-
-            # for all keys in baseline, find difference
-            for l in b_keys:
-                ret.categoryCounts[field][l] = a[l] - b[l];
-
-        return ret
+        for (f1, f2), d in self.flows.items():
+            if (f1 not in packet or f2 not in packet): continue
+            d[(packet[f1], packet[f2])] += 1
 
     def __repr__(self):
         return self.__str__()
@@ -99,6 +70,7 @@ class Bucket():
         ret += "ip_src: " +  json.dumps(self.categoryCounts['ip_src'], indent = 4) + "\n"
         ret += "ip_dst: " + json.dumps(self.categoryCounts['ip_dst'], indent = 4) + "\n"
         ret += json.dumps(self.pktCounts, indent = 4) + "\n"
+        ret += str(self.flows) + "\n";
         return ret
 
 # aggregate stats
@@ -112,30 +84,6 @@ class PacketAggregate():
 
     def update(self, packet, index):
         self.buckets[index // self.n][index % self.n].update(packet)
-
-    # average the values along over bucket index  and return new bucket
-    def avg(self, bktIndex):
-        num = 0
-        ret = Bucket()
-        for interval in self.buckets:
-            bkt = interval[bktIndex]
-
-            # First or last bucket, partial data we don't want to include
-            if (bktIndex > 0 and interval[bktIndex - 1].isZero()): continue
-            if (bktIndex < self.n - 1 and interval[bktIndex + 1].isZero()): continue
-            if (bkt.isZero()): continue
-
-            ret.total += bkt.total
-            for field in bkt.pktCounts:
-                ret.pktCounts[field] += bkt.pktCounts[field]
-
-            for field in bkt.categoryCounts:
-                for label in bkt.categoryCounts[field]:
-                    ret.categoryCounts[field][label] += bkt.categoryCounts[field][label]
-            num += 1
-
-        ret.scale(1/num);
-        return ret
 
     def print(self):
         i = 0

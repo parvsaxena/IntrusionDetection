@@ -10,9 +10,12 @@ class MLPredictor():
     known = None
 
     def __init__(self, model):
-        self.clf = pickle.load(open(model, 'rb'))
+        (self.use_flows, self.clf) = pickle.load(open(model, 'rb'))
        
     def predict(self, vec):
+        # note this is hard coded for 18 flow features at end!!!!!!
+        if (self.use_flows): vec = vec[:-18]
+
         nd_vals = np.array(vec).reshape(1, -1)
         prediction = self.clf.predict(nd_vals)
         return prediction
