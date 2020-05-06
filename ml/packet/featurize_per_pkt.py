@@ -51,11 +51,15 @@ if __name__=='__main__':
     insert_cursor=conn2.cursor()
 
     cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
-    cur.execute("select distinct * from sahiti_feat;")
+    #cur.execute("select distinct * from distinct_trim;")
+    cur.execute("select distinct * from sahiti_distinct;")
     i=0
     for row in cur:
         i+=1
+        print ()
+        print(row)
         vec=transform(row,fields2)
+        print(vec)
         insert_into_db(vec,insert_cursor)
         if i%10000==0:
             print(i)

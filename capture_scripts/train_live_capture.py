@@ -14,8 +14,8 @@ import pickle
 count = 0
 
 baseline = None
-with open("./../baseline.out", "rb") as f:
-    baseline = pickle.load(f)
+# with open("./../baseline.out", "rb") as f:
+#     baseline = pickle.load(f)
 
 
 pkt_analyzer = PacketAnalyzer(run_in_bg = True,
@@ -27,7 +27,7 @@ pkt_analyzer = PacketAnalyzer(run_in_bg = True,
 filter = "src port not 8001"
 filter += " and dst port not 8001"
 filter += " and ip host not 128.220.221.15"
-sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, timeout = 900, filter=filter)
+sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, timeout = 3600*6, filter=filter)
 print("FInishing up\n")
 
 # for pkt in sniff(iface='wlp58s0', store=0, prn=parse_packet):

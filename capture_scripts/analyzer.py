@@ -2,6 +2,8 @@ import sys
 sys.path.append('./../db_scripts/')
 sys.path.append('./../anomaly_scripts/')
 sys.path.append('./../')
+sys.path.append('./../ml/packet')
+sys.path.append('./../ml/aggregate/')
 
 from scapy.all import *
 from scapy.layers.l2 import Ether
@@ -9,7 +11,10 @@ from scapy.layers.inet import IP, TCP, UDP, ICMP, icmptypes
 from scapy.data import ETHER_TYPES
 from multiprocessing import Process, Queue
 from dbDaemon import dbDriver, dbDaemon
-from anomalyDaemon import PacketProcessor, AnomalyDaemon
+# from anomalyDaemon import PacketProcessor, AnomalyDaemon
+from perPktDaemon import lorDaemon, LORProcessor
+from daemon import aggregateDaemon, AggregateProcessor
+from model_paths import model_paths
 import argparse
 import pickle
 import os
@@ -124,20 +129,44 @@ class PacketAnalyzer:
             # TODO: optimize and dont create some queues in trainig.testing mode
             # Db insertion queue
             self.pqueue = Queue()
-            db_insertion_process = Process(target=dbDaemon, args=(self.pqueue,))
+            db_insertion_process = Process(target=dbDaemon, 
+                                           args=(self.pqueue,))
             print("Creating",  db_insertion_process.name, db_insertion_process.pid)
             db_insertion_process.daemon = True
             db_insertion_process.start()
             
             if is_training_mode == False:
-                # ML prediction queue
-                self.ml_queue = Queue()
-                prediction_process = Process(target=AnomalyDaemon, args=(self.ml_queue,baseline))
-                print("Creating", prediction_process.name, prediction_process.pid)
+                # List of ML prediction queues
+                self.ml_queue = []
+                
+                # Aggregate based daemon
+                self.ml_queue.append(Queue())
+                prediction_process = Process(target=aggregateDaemon, 
+                                             args=(self.ml_queue[0],
+                                                   model_paths["Agg_Baseline"],
+                                                   model_paths["Agg_Model"], 
+                                                   model_paths["Agg_Featurized_Baseline"],
+                                                   model_paths["Agg_output"]))
+                
                 prediction_process.daemon = True
                 prediction_process.start()
+                
+                #LOR
+                self.ml_queue.append(Queue())
+                # print(len(self.ml_queue))
+                prediction_process2 = Process(target=lorDaemon,
+                                              args=(self.ml_queue[1], 
+                                                    model_paths["LORProcessor"],
+                                                    model_paths["scaler"],
+                                                    model_paths["perPkt_output"]))
+                
+                # print("Creating lor ", prediction_process2.name, prediction_process2.pid)
+                prediction_process2.daemon = True
+                prediction_process2.start()
+                
             else:
                 self.ml_queue = None
+                # self.pkt_p = None
                 # self.pkt_p = PacketProcessor(baseline)
 
         else:
@@ -146,9 +175,24 @@ class PacketAnalyzer:
             
             if is_training_mode == False:
                 self.ml_queue = None
-                self.pkt_p = PacketProcessor(baseline)
+                #TODO: raname classes aswell
+                self.pkt_p = []
+                
+                # Aggregate Processor
+                self.pkt_p.append(AggregateProcessor(model_paths["Agg_Baseline"],
+                                                     model_paths["Agg_Model"],
+                                                     model_paths["Agg_Featurized_Baseline"],
+                                                     model_paths["Agg_output"]))
+                
+                # PerPacketProcessor
+                """
+                self.pkt_p.append(LORProcessor(model_paths["LORProcessor"],
+                                               model_paths["scaler"],
+                                               model_paths["perPkt_output"]))
+                """
             else:
                 self.ml_queue = None
+                self.pkt_p = None
 
         self.packet_count = 0
         self.is_training_mode = is_training_mode
@@ -167,11 +211,14 @@ class PacketAnalyzer:
         # Adding training/testing flag
         parsed_dict['is_training'] = self.is_training_mode
         
+        # Insert into db
         self.insert_packet(parsed_dict)
+        
         # If testing mode, call predict_packet
         if self.is_training_mode == False:
             self.predict_packet(parsed_dict)
- 
+    
+    # Db insertion queue/class
     def insert_packet(self, parsed_dict):
         if self.disable_db_insertion == True:
             return
@@ -189,27 +236,28 @@ class PacketAnalyzer:
                 print ("DB instertion Queue is too high")
                 print("Queue size", self.pqueue.qsize())
                 # exit(-1)
-
+    
+    # Prediction/Anomaly queue/class
     def predict_packet(self, parsed_dict):
-        # parsed_dict = parse_packet(pkt_data)
-        
-        # TODO: Remove raw and is_training
-        # parsed_dict.pop('raw')
-        # parsed_dict.pop('is_training')
-
+        # TODO: Remove raw and is_training / pop
 
         if self.ml_queue is None:
-            print("fg prediction")
-            self.pkt_p.process(parsed_dict)
+            # print("fg prediction")
+            for model in self.pkt_p:
+                # print("model")
+                model.process(parsed_dict)
         else:
-            # print("bg prediction")
-            self.ml_queue.put(parsed_dict)
-            if self.ml_queue.qsize() > 100:
-                print ("Prediction Queue is too high")
-                print("Queue size", self.ml_queue.qsize())
-                # exit(1)
+            for queue in self.ml_queue:
+                # print ("q queue")
+                # print("bg prediction")
+                queue.put(parsed_dict)
+                if queue.qsize() > 100:
+                    print ("Prediction Queue is too high")
+                    print("Queue size", queue.qsize())
+                    # exit(1)
 
-
+#TODO: Remove 
+"""
 # Passes packets to anomaly detector
 class PacketTester:
     def __init__(self, baseline, run_in_bg):
@@ -221,12 +269,26 @@ class PacketTester:
             testing_process.daemon = True
             testing_process.start()
 
-
         else:
             self.pqueue = None
             self.p = PacketProcessor(baseline)
         self.packet_count = 0
 
+# LOR
+class  lorPacketTester:
+        if run_in_bg == True:
+            # requires setting up queue, and starting zombie process
+            self.pqueue = Queue()
+            testing_process = Process(target=lorDaemon_distinct, args=(self.pqueue))
+            print("Creating lor_distinct daemon  ", testing_process.name, testing_process.pid)
+            testing_process.daemon = True
+            testing_process.start()
+
+        else:
+            self.pqueue = None
+            self.p = PacketProcessor(baseline)
+        self.packet_count = 0
+"""
 
 count = 0
 

@@ -1,4 +1,5 @@
 import argparse
+import os
 import numpy as np
 
 from datetime import datetime
@@ -73,18 +74,23 @@ class AggregateProcessor():
                 # Predict using ml algorithms and show the diff if the majority predict abnormal
                 features = featurize(self.known, self.curBkt)
 
+                neg = []
+                
                 num_abnormal = 0
                 for p in self.predictors:
                     if (p.predict(features) == -1):
-                        num_abnormal = 1;
+                        neg.append(os.path.basename(p.model))
+                        num_abnormal += 1
 
                 if (num_abnormal > len(self.predictors) // 2):
-                    print("Last minute predicted abnormal:", flush=True, file=self.out)
+                    print("**** Last minute predicted abnormal ****", flush=True, file=self.out)
                     self.printDiff(features)
 
                 else:
-                    print("Last minute predicted normal.", flush=True, file=self.out)
+                    print("**** Last minute predicted normal ****", flush=True, file=self.out)
                 
+                print("Models that predicted abmormal: {}".format(str(neg)), flush=True, file=self.out)
+
             else:
                 self.firstBucket = False
             self.curBkt = Bucket()

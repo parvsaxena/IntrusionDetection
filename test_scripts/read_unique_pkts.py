@@ -2,12 +2,14 @@ from scapy.all import *
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, TCP, UDP, ICMP, icmptypes
 from scapy.data import ETHER_TYPES
+import sys
+sys.path.append('./../db_scripts/')
+sys.path.append('./../capture_scripts/')
 
 from dbDaemon import dbDriver
 
 import argparse
 import os
-import sys
 
 from analyzer import PacketAnalyzer, parse_packet
 
@@ -16,7 +18,7 @@ def write(pkt):
 
 
 db = dbDriver("scada")
-pkt_analyzer = PacketAnalyzer(False)
+# pkt_analyzer = PacketAnalyzer(False)
 
 print("Daemon created\n")
 # pkt_raw_list = db.read_all_pkt_raw()
@@ -42,10 +44,10 @@ for id in id_list:
     del eth_pkt[UDP].chksum
     eth_pkt.show2(dump=False)
     
-    # sendp(eth_pkt, iface='eth2', count = 100, return_packets = True)
+    sendp(eth_pkt, iface='eth2', count = 10000, inter=0.001)#, return_packets = True)
 
 # Write the list to pcap
-write(pkt_raw_list)
+# write(pkt_raw_list)
 
 
 # def write(pkt):

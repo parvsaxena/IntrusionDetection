@@ -6,6 +6,10 @@ from  __init__ import *
 import pickle
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
+
+
+
 
 if  __name__=='__main__':
     start=time.time()
@@ -38,6 +42,7 @@ if  __name__=='__main__':
         vecs.append(vec)
         print(vec)
     scaler=StandardScaler()
+    #scaler=MinMaxScaler()
     scaler.fit(vecs)
     vecs=scaler.transform(vecs)
     end=time.time()
@@ -47,7 +52,7 @@ if  __name__=='__main__':
     for vec in vecs:
         print(vec)
     start=time.time()
-    clf=LocalOutlierFactor(n_neighbors=2,novelty=True,metric='euclidean')
+    clf=LocalOutlierFactor(n_neighbors=1,novelty=True,metric='cosine')
     clf.fit(vecs)
     print("Fitting done")
     pkl_filename = "lor_distinct_model.pkl"

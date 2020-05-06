@@ -32,15 +32,23 @@ macs = [
 '00:22:4d:b5:86:75',
 'ff:ff:ff:ff:ff:ff'
 ]
+ports=[
+4546,
+53,
+34489,
+5353,
+68,123,
+34835
+]
 
 def do_ip(ip):
-    val=10
+    val=1
     if ip in machines.keys():
         val=100
     return val
 
 def do_mac(ip,mac):
-    val=10
+    val=1
     if ip in machines.keys():
         if mac==machines[ip][0]:
             val=100
@@ -49,8 +57,13 @@ def do_mac(ip,mac):
     return val
 
 def do_only_mac(mac):
-    val=10
+    val=1
     if mac in macs:
+        val=100
+    return val
+def do_ports(port):
+    val=1
+    if port in ports:
         val=100
     return val
 
@@ -102,6 +115,8 @@ def transform(row,fields):
                 value=do_mac(row['arp_psrc'],row[field])
             if field=='arp_hwdst':
                 value=do_mac(row['arp_pdst'],row[field])
+            if field in ['udp_src_port','udp_dst_port']:
+                value=do_ports(row[field])
         """
         if field in ['has_ip','has_ether','has_tcp','has_udp','has_icmp','has_arp']:
             if value==-5:
@@ -115,4 +130,4 @@ def transform(row,fields):
     return vec
 
 #distinct_cols=['ip_src', 'ip_dst', 'ip_ttl', 'ip_len', 'ip_ver', 'proto', 'mac_src', 'mac_dst', 'ether_type', 'tcp_src_port', 'tcp_dst_port', 'udp_src_port', 'udp_dst_port', 'udp_len', 'icmp_type', 'icmp_code', 'arp_op', 'arp_psrc', 'arp_pdst', 'arp_hwsrc', 'arp_hwdst', 'has_ip', 'has_ether', 'has_tcp', 'has_udp', 'has_icmp', 'has_arp']
-distinct_cols=['ip_src', 'ip_dst', 'ip_ttl', 'ip_len', 'ip_ver', 'proto', 'mac_src', 'mac_dst', 'ether_type', 'tcp_src_port', 'tcp_dst_port', 'udp_src_port', 'udp_dst_port', 'icmp_type', 'icmp_code', 'arp_op', 'arp_psrc', 'arp_pdst', 'arp_hwsrc', 'arp_hwdst', 'has_ip', 'has_ether', 'has_tcp', 'has_udp', 'has_icmp', 'has_arp']
+distinct_cols=['ip_src', 'ip_dst', 'ip_ttl', 'ip_len', 'ip_ver', 'proto', 'mac_src', 'mac_dst',  'tcp_src_port', 'tcp_dst_port', 'udp_src_port', 'udp_dst_port', 'icmp_type', 'icmp_code', 'arp_op', 'arp_psrc', 'arp_pdst', 'arp_hwsrc', 'arp_hwdst', 'has_ip', 'has_ether', 'has_tcp', 'has_udp', 'has_icmp', 'has_arp']

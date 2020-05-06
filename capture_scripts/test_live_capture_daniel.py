@@ -1,5 +1,6 @@
 import sys
 sys.path.append('./../db_scripts/')
+sys.path.append('./../anomaly_scripts/')
 sys.path.append('./../')
 sys.path.append('./../ml/')
 
@@ -18,7 +19,7 @@ baseline = None
 #     baseline = pickle.load(f)
 
 
-pkt_analyzer = PacketAnalyzer(run_in_bg = True,
+pkt_analyzer = PacketAnalyzer(run_in_bg = False,
                               is_training_mode = False,
                               disable_db_insertion = True,
                               baseline = baseline)
@@ -27,9 +28,10 @@ pkt_analyzer = PacketAnalyzer(run_in_bg = True,
 filter = "src port not 8001"
 filter += " and dst port not 8001"
 filter += " and ip host not 128.220.221.15"
-sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, filter=filter)
+sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, 
+timeout = 600, filter=filter)
 #sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, timeout = 60)
-print("Finishing up\n")
+print("FInishing up\n")
 
 # for pkt in sniff(iface='wlp58s0', store=0, prn=parse_packet):
     # count = count + 1
