@@ -1,4 +1,5 @@
-#TODO: find scada3 ip
+# 'machines' is a dictionary which maps machine_names in our SCADA system to their corresponding n/w level properties
+# Used by dos_scripts to generate attacks
 
 machines = {
 "scada1": {'ip':'128.220.221.91', 'mac':'00:22:4d:b8:6f:04', 'port':4546},
@@ -12,5 +13,5 @@ machines = {
 "mini3": {'ip':'128.220.221.17', 'mac':'00:22:4d:b5:86:67', 'port':4546},
 }
 
-
+# Database query to find the mapppings from packets captured in Database
 qeury_machines = "SELECT DISTINCT mac_src, ip_src FROM packet_feat where has_arp=False;"
