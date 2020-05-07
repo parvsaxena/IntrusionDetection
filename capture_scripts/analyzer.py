@@ -62,9 +62,7 @@ def extract_udp(parsed_dict, udp_pkt):
 
 def extract_icmp(parsed_dict, icmp_pkt):
     #print(icmp_pkt.summary())
-    # TODO: Ask which more fields are necessary
     parsed_dict['icmp_type'] = icmp_pkt.type  # 0 for request, 8 for reply
-    #parsed_dict['icmp_type_str'] = icmptypes[icmp_pkt.type]
     parsed_dict['icmp_code'] = icmp_pkt.code  # code field which gives extra information about icmp type
     parsed_dict['has_icmp'] = True
 
@@ -77,33 +75,29 @@ def extract_arp(parsed_dict, arp_pkt):
     parsed_dict['arp_hwdst'] = arp_pkt.hwdst
     parsed_dict['has_arp'] = True
 
+# Field not really used in logic anywhere
 def isAttackPacket(parsed_dict):
-    # TODO: Add logic for identifying attack packets during data generation here
     parsed_dict['is_attack_pkt'] = False
 
-# raw packet to parsed dictionary
+# Given a raw packet, parse out features in form of a dictionary
 def parse_packet(pkt_data):
+    
     # TODO: Initialize data
     parsed_dict = {}
-    #Parse arrival time
+    # Parse arrival time
     parsed_dict['time'] = pkt_data.time
 
-    # print(tape(ip_pkt))
     if pkt_data.haslayer(Ether):
-        #print("Ether layer exists")
         ether_pkt = pkt_data.getlayer(Ether)
         extract_ether(parsed_dict, ether_pkt)
-    # TODO: Extract ports
+    
     # TODO: Do we need IPv6 support?
     # IP packet
     if pkt_data.haslayer(IP):
-        #print("Received IP packet")
         ip_pkt = pkt_data.getlayer(IP)
         extract_ip(parsed_dict, ip_pkt)
-        # print(ip_pkt.show())
  
     if pkt_data.haslayer(TCP):
-        #print("TCP layer exists")
         tcp_pkt = pkt_data.getlayer(TCP)
         extract_tcp(parsed_dict, tcp_pkt)
 
@@ -111,14 +105,14 @@ def parse_packet(pkt_data):
         udp_pkt = pkt_data.getlayer(UDP)
         extract_udp(parsed_dict, udp_pkt)
 
-        #print("UDP layer exists")
     if pkt_data.haslayer(ARP):
-        #print("ARP layer exists")
         arp_pkt = pkt_data.getlayer(ARP)
         extract_arp(parsed_dict, arp_pkt)
+
     if pkt_data.haslayer(ICMP):
         icmp_pkt = pkt_data.getlayer(ICMP)
         extract_icmp(parsed_dict, icmp_pkt)
+    
     return parsed_dict
 
 
@@ -126,7 +120,7 @@ class PacketAnalyzer:
     def __init__(self, run_in_bg, is_training_mode, disable_db_insertion, baseline):
         if run_in_bg == True:
             # requires setting up queue, and starting zombie process
-            # TODO: optimize and dont create some queues in trainig.testing mode
+            
             # Db insertion queue
             self.pqueue = Queue()
             db_insertion_process = Process(target=dbDaemon, 
@@ -153,7 +147,6 @@ class PacketAnalyzer:
                 
                 #LOR
                 self.ml_queue.append(Queue())
-                # print(len(self.ml_queue))
                 prediction_process2 = Process(target=lorDaemon,
                                               args=(self.ml_queue[1], 
                                                     model_paths["LORProcessor"],
@@ -175,7 +168,6 @@ class PacketAnalyzer:
             
             if is_training_mode == False:
                 self.ml_queue = None
-                #TODO: raname classes aswell
                 self.pkt_p = []
                 
                 # Aggregate Processor
@@ -190,6 +182,7 @@ class PacketAnalyzer:
                                                model_paths["scaler"],
                                                model_paths["perPkt_output"]))
                 """
+            
             else:
                 self.ml_queue = None
                 self.pkt_p = None
@@ -224,14 +217,12 @@ class PacketAnalyzer:
             return
         
         if self.pqueue is None:
-            print("fg insertion")
+            # print("fg insertion")
             raw_dump = parsed_dict.pop('raw')
             self.db.insert_packet(raw_dump, parsed_dict)
         else:
             # print("bg insertion")
-            # print("raw is", parsed_dict['raw'])
             self.pqueue.put(parsed_dict)
-            # print("Queue size", self.pqueue.qsize())
             if self.pqueue.qsize() > 1000:
                 print ("DB instertion Queue is too high")
                 print("Queue size", self.pqueue.qsize())
@@ -239,60 +230,23 @@ class PacketAnalyzer:
     
     # Prediction/Anomaly queue/class
     def predict_packet(self, parsed_dict):
-        # TODO: Remove raw and is_training / pop
-
         if self.ml_queue is None:
             # print("fg prediction")
             for model in self.pkt_p:
-                # print("model")
                 model.process(parsed_dict)
         else:
             for queue in self.ml_queue:
-                # print ("q queue")
                 # print("bg prediction")
                 queue.put(parsed_dict)
                 if queue.qsize() > 100:
                     print ("Prediction Queue is too high")
                     print("Queue size", queue.qsize())
-                    # exit(1)
+                    # exit(-1)
 
-#TODO: Remove 
-"""
-# Passes packets to anomaly detector
-class PacketTester:
-    def __init__(self, baseline, run_in_bg):
-        if run_in_bg == True:
-            # requires setting up queue, and starting zombie process
-            self.pqueue = Queue()
-            testing_process = Process(target=AnomalyDaemon, args=(self.pqueue,baseline))
-            print("Creating", testing_process.name, testing_process.pid)
-            testing_process.daemon = True
-            testing_process.start()
-
-        else:
-            self.pqueue = None
-            self.p = PacketProcessor(baseline)
-        self.packet_count = 0
-
-# LOR
-class  lorPacketTester:
-        if run_in_bg == True:
-            # requires setting up queue, and starting zombie process
-            self.pqueue = Queue()
-            testing_process = Process(target=lorDaemon_distinct, args=(self.pqueue))
-            print("Creating lor_distinct daemon  ", testing_process.name, testing_process.pid)
-            testing_process.daemon = True
-            testing_process.start()
-
-        else:
-            self.pqueue = None
-            self.p = PacketProcessor(baseline)
-        self.packet_count = 0
-"""
 
 count = 0
 
-
+# Use main, if you want to read data from pcap, instead of capturing it via live traffic
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Pcap analyzer')
     parser.add_argument('--pcap', help="provide pcap to analyze", required=True)

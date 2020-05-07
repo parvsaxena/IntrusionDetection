@@ -14,9 +14,6 @@ import pickle
 count = 0
 
 baseline = None
-# with open("./../baseline.out", "rb") as f:
-#     baseline = pickle.load(f)
-
 
 pkt_analyzer = PacketAnalyzer(run_in_bg = True,
                               is_training_mode = True,
@@ -24,16 +21,12 @@ pkt_analyzer = PacketAnalyzer(run_in_bg = True,
                               baseline = baseline)
 
 
+# Currently filtering/avoiding traffic to/from mini1, and that of ssh(port 8001)
 filter = "src port not 8001"
 filter += " and dst port not 8001"
 filter += " and ip host not 128.220.221.15"
 sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, timeout = 3600*6, filter=filter)
 print("FInishing up\n")
 
-# for pkt in sniff(iface='wlp58s0', store=0, prn=parse_packet):
-    # count = count + 1
-    # print("Packet no", count)
-    # print("Packet ether qualtities are", pkt.src, pkt.dst)
-    # parse_packet(pkt)
 
 
