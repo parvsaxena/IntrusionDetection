@@ -15,14 +15,15 @@ Do attacks
 Specific Instructions:
 Database and tables set up:
     Install postgre
-		sudo apt install postgresql postgresql-contrib
-        /etc/init.d/postgresql stop
-        /etc/init.d/postgresql start
+        If Ubuntu:
+		    sudo apt install postgresql postgresql-contrib
+            /etc/init.d/postgresql stop
+            /etc/init.d/postgresql start
     Create database users
-        sudo -u postgres psql
-        sudo -u postgres createdb scada
-        create user mini;
-        grant all privileges on database scada to mini;
+        sudo -u postgres psql (gets psql cmd line)
+        sudo -u postgres createdb scada (creates db scada)
+        create user mini; (creates user mini without passwd)
+        grant all privileges on database scada to mini; (Gives mini all rights on scada, we will use thins user in rest of the scripts)
     Create table
         cd db_scripts; python3 createDB.py
         If previous tables exist then use --recreate option to drop and create tables.
