@@ -20,9 +20,6 @@ import pickle
 import os
 
 
-# Time ??, Source IP(d), Destination IP(d), Protocol ??, Length(d),
-# Source Port(d), Dest Port(d), TTL(d), IP version ??
-# https://www.howtoinstall.co/en/ubuntu/xenial/tshark      
 
 db_name = "scada"
 def expand(x):
