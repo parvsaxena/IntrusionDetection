@@ -1,5 +1,6 @@
 import sys
 sys.path.append('./../db_scripts/')
+sys.path.append('./../anomaly_scripts/'
 sys.path.append('./../')
 sys.path.append('./../ml/')
 

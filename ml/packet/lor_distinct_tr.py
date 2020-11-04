@@ -34,7 +34,6 @@ if  __name__=='__main__':
 
 
     cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
-    # cur.execute("SELECT  * FROM distinct_feat LIMIT 5;")
     cur.execute("SELECT distinct * FROM per_packet;")
     vecs=[]
     for row in cur:

@@ -50,15 +50,17 @@ Train Packet Analysis based ML modules
     Extract from packet_feat table unique rows of needed data.
         In psql -
         Create table features as select ('ip_src', 'ip_dst', 'ip_ttl', 'ip_len', 'ip_ver', 'proto', 'mac_src', 'mac_dst',  'tcp_src_port', 'tcp_dst_port', 'udp_src_port', 'udp_dst_port', 'icmp_type', 'icmp_code', 'arp_op', 'arp_psrc', 'arp_pdst', 'arp_hwsrc', 'arp_hwdst', 'has_ip', 'has_ether', 'has_tcp', 'has_udp', 'has_icmp', 'has_arp') from packet_feats;
+        
 
-        create table  sahiti_distinct as select distinct * from features;
+        create table  features_distinct as select distinct * from features;
 
         This extracts distinct packets headers and make training faster.
 
     Now run script -
         cd ml;
         check ips and mac addresses defined in init are correct.
-        python featurize_per_pkt.py (This is feature engineering step)
+        python db_scripts/create_per_packet_features.py
+        python featurize_per_pkt.py (This is feature engineering step; If we want to use NN, feed features_distict table to NN directly)
         python lor_distinct_tr.py (This will generate the models)
 
         Append the model and normalizer file paths to model_paths.py file in capture_scripts directory.
@@ -66,7 +68,7 @@ Train Packet Analysis based ML modules
 Real time prediction
 
 	cd capture_scripts;
-	sudo python test_capture_sahiti.py &
+	sudo python test_live_capture.py &
 	tail -f  perPkt_output.log  - This will print Traffic Pattern ML predictions
 	tail -f aggregate_output.log - This will print Packet Analysis based Ml predictions
 

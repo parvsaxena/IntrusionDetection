@@ -51,8 +51,7 @@ if __name__=='__main__':
     insert_cursor=conn2.cursor()
 
     cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
-    #cur.execute("select distinct * from distinct_trim;")
-    cur.execute("select distinct * from sahiti_distinct;")
+    cur.execute("select distinct * from features_distinct;")
     i=0
     for row in cur:
         i+=1
