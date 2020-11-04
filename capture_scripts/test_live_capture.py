@@ -24,7 +24,8 @@ pkt_analyzer = PacketAnalyzer(run_in_bg = True,
                               disable_db_insertion = True,
                               baseline = baseline)
 
-
+#These filters can be changed to filter; currently set to filter out ssh to span connnected machine; If not needed delete filter.
+#Similarly timeout can be used to run monitor for limited duration, in sec. 
 filter = "src port not 8001"
 filter += " and dst port not 8001"
 filter += " and ip host not 128.220.221.15"

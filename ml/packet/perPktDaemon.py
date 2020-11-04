@@ -79,17 +79,7 @@ def lorDaemon(queue, pkl_filename,pkl_scaler,output_file):
 
     while True:
         parsed_pkt =queue.get()
-        if Ether(parsed_pkt['raw']).haslayer(Dot3):
-            continue 
         
-        if parsed_pkt.get('arp_psrc',"")=="192.168.0.120":
-            continue
-        if parsed_pkt.get('mac_src')=="00:e1:6d:c3:bc:06":
-            continue
-        """ 
-        if parsed_pkt.get('arp_pdst',"")=="128.220.221.1":
-            continue  
-        """
         lor.process(parsed_pkt)
         if len(lor.X)>100:
             lor.predict()
