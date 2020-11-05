@@ -29,7 +29,7 @@ cur.execute("SELECT * FROM {}".format(args.table))
 # get the time of the first packet
 firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MIN(time) FROM {0});".format(args.table))
 if (firstCur.rowcount == 0):
-    printf("No rows in packet_feat!")
+    print("No rows in packet_feat!")
     exit(1)
 minTime = int(float(firstCur.fetchone()[0]))
 firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MAX(time) FROM {0});".format(args.table))

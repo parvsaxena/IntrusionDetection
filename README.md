@@ -41,7 +41,7 @@ Training data capture
         timeout - duration of traffic capture in seconds
         Filter - Edit if we need to filter capture traffic at sniffing level
 
-Explore data
+Explore data for Packet Analysis Algorithm
         It is important to analyse the data captured. This will be helpful in feature engineering and parameter tuning
 
 Train Traffic Pattern based ML modules
@@ -65,7 +65,7 @@ Train Packet Analysis based ML modules
 
         Append the model and normalizer file paths to model_paths.py file in capture_scripts directory.
 
-Real time prediction
+Real time prediction for Packet Analysis based Algorithm
 
 	cd capture_scripts;
 	sudo python test_live_capture.py &
