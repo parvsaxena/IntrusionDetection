@@ -1,3 +1,11 @@
+"""
+This daemon , loads Packet Analysis based model and scaler(pathe set in capture_scripts/model_paths.py)
+Then uses transform(in ml/packet/init) and gets feature vector.
+It baches 100 packets and runs prediction on each, finally outputs only DISTINCT attack packets in that batch.
+The attack predictions are written to output_file(capture_scripts/model_paths)
+
+"""
+
 import pickle
 from multiprocessing import Queue
 from __init__ import *

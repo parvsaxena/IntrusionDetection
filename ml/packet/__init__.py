@@ -1,3 +1,8 @@
+"""
+If not NN , we need to transform feature vector to be numerical, so below map known/correct IPs, macs, ports.
+They will be used by transform function to do feature engineering.
+"""
+
 machines = {
 '128.220.221.91': ['00:22:4d:b8:6f:04', 4546],
 '128.220.221.92': ['00:22:4d:b8:6f:a5', 4546],

@@ -1,3 +1,7 @@
+"""
+Selects transformed features from per_packet and uses it to train scaler, LocalOutlierFactor model and write them to current folder
+"""
+
 import numpy as np
 import time
 import psycopg2

@@ -1,3 +1,7 @@
+"""
+Selects rows form features_distinct, transforms them and inserts transformed feature vector into per_packet table
+"""
+
 import argparse
 import psycopg2
 import numpy as np
