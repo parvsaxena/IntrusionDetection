@@ -53,9 +53,41 @@ Parameters in file:
 It is important to analyse the data captured. This will be helpful in feature engineering and parameter tuning
 
 ## 4. Training Models
-### Traffic Pattern based ML modules
+### Traffic Pattern based ML models
+The traffic based model is based off the assumption that there is some pattern to the "normal" expected data, e.g. one minute
+looks like another minute. So therefore the training data is grouped into "buckets" of a specified time period (defaults to one
+minute). Each bucket simply stores the counts of different features, is a single data point for our model. Prediction then
+consists of collecting a minute of real time packets, and feeding that bucket to our model.
 
-### Packet Analysis based ML modules
+The scripts in [`ml/aggregate`](ml/aggregate) are used to train such a model. Following is a brief descripttion of each files purpose
+- `PacketAggregate.py`: Defines class for buckets and "intervals", which are groups of buckets
+- `generate_aggregate.py`: Reads from database of parsed packets and generates "aggregate" object, which contains the buckets and other auxiliary info
+- `featurize_aggregate.py`: Converts buckets to real vectors for training
+- `train_aggregate.py`: Trains models
+- `daemon.py`: Given a source of parsed packets, and a list of models, performs prediction. This consists of reading from the source, and once a bucket is completed, outputting the result from each model.
+
+Note: `featurize_aggregate.py` is hardcoded to work with the specific spire config of 6 replicas, 1 machine for the HMI, and 1 for proxies. The ip and mac address need to be edited (though this will be changed so.
+
+To create models, given there are parsed packets in the database, follow the steps below
+```
+python generate_aggregate.py
+```
+This will read from a default databse and output (by default) a file containing the aggregate called `baseline.out`. These and other parameters can be viewed by running the script with `--help`,
+```
+python featurize_aggregate.py
+```
+This will read from a given aggregate file (`baseline.out` by default) and output `aggregate_features.pkl` which is really just a matrix representation of the aggregate object, though any addresses not specified (see above) are instead labeled as "unknown". Again `--help` can be used to see various options.
+
+```
+python --algorithm lof
+```
+Trains a model, outputing it to a specified file (default `aggregate_model.py`). The algorithm should be specified as [`lof`](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html), [`svm`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.OneClassSVM.html#sklearn.svm.OneClassSVM), or [`cov`](https://scikit-learn.org/stable/modules/generated/sklearn.covariance.EllipticEnvelope.html#sklearn.covariance.EllipticEnvelope).
+Other options are also available to create different models.
+
+Finally, make sure to put the models you wish to use in `modelPaths.py` in the prediction stage.
+
+
+### Packet Analysis based ML models
 Extract from packet_feat table unique rows of needed data.
 
 In psql -
