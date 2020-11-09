@@ -6,6 +6,12 @@ from datetime import datetime
 
 from PacketAggregate import *
 
+'''
+This script reads from the table of packet_features (i.e. packets with parsed header values) and creates
+an "aggregate" object, which is essentially counts of certain features over different time periods.
+'''
+
+
 # Parse command line args
 parser = argparse.ArgumentParser(description='Anomaly based intrusion detection baseline generator')
 parser.add_argument('--interval', default=60, type=int, help='overall interval to collect in minutes')
@@ -29,7 +35,7 @@ cur.execute("SELECT * FROM {}".format(args.table))
 # get the time of the first packet
 firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MIN(time) FROM {0});".format(args.table))
 if (firstCur.rowcount == 0):
-    printf("No rows in packet_feat!")
+    print("No rows in packet_feat!")
     exit(1)
 minTime = int(float(firstCur.fetchone()[0]))
 firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MAX(time) FROM {0});".format(args.table))

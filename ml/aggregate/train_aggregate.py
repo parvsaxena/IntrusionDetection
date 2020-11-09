@@ -20,9 +20,9 @@ if __name__ != '__main__':
 parser = argparse.ArgumentParser(description='Train models on aggregate feature data')
 parser.add_argument('--features', default='./aggregate_features.pkl', help='pickled features object')
 parser.add_argument('--model', default='./aggregate_model.pkl', help='output, pickled model')
-parser.add_argument('--algorithm', default='lof', choices=['lof', 'svm', 'cov'], help='algorithm to train on')
+parser.add_argument('--algorithm', choices=['lof', 'svm', 'cov'], help='algorithm to train on')
 parser.add_argument('--use_flows', action='store_true', help='whether to use the flow related features in the data')
-parser.add_argument('--no_standardize', action='store_false', help='whether to use the flow related features in the data')
+parser.add_argument('--no_standardize', action='store_false', help='whether to standardize vectors')
 parser.add_argument('--pca', default='0', type=int, help='number of components to run PCA on')
 parser.add_argument('--test_split', default='0', type=float, help='percentage of data to test on')
 

@@ -9,7 +9,7 @@ from PacketAggregate import *
 from predict_aggregate import MLPredictor
 from featurize_aggregate import featurize
 
-# Process packets and compare to 
+# Process packets and uses trained models
 class AggregateProcessor():
 
     # Given the filenames of data/output log, creates processor

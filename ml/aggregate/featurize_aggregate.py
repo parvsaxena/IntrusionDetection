@@ -173,11 +173,11 @@ if __name__ == '__main__':
     macs = [
         '00:22:4d:b8:6f:04',
         '00:22:4d:b8:6f:a5',
-        #['', 4546] 
+        #'00:22:4d:b7:64:32',
         '00:22:4d:b8:70:0c',
         '00:22:4d:d0:88:58',
         '00:22:4d:d0:88:74',
-        # ['00:22:4d:b5:86:75', 4546],
+        #'00:22:4d:b5:86:75',
         '00:22:4d:b5:86:8b',
         '00:22:4d:b5:86:67'
     ]
@@ -218,7 +218,6 @@ if __name__ == '__main__':
         data.append(featurize(known, b))
     
     data = np.array(data)
-    #data = sklearn.preprocessing.normalize(data)
     names = get_feature_names(known, bkts[0])
 
     print(names)
@@ -226,6 +225,7 @@ if __name__ == '__main__':
     print('number of data points:', len(data))
     print(data)
     print({n:v for n, v in zip(names, data[0])})
+
     # save array
     with open(args.output, 'wb') as f:
         pickle.dump((known, names, data), f)
