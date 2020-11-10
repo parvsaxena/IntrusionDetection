@@ -13,7 +13,7 @@ from multiprocessing import Process, Queue
 from dbDaemon import dbDriver, dbDaemon
 # from anomalyDaemon import PacketProcessor, AnomalyDaemon
 from perPktDaemon import lorDaemon, LORProcessor
-from daemon import aggregateDaemon, AggregateProcessor
+from aggregate_daemon import run_aggregate_daemon
 from model_paths import model_paths
 import argparse
 import pickle
@@ -135,9 +135,8 @@ class PacketAnalyzer:
                 
                 # Aggregate based daemon
                 self.ml_queue.append(Queue())
-                prediction_process = Process(target=aggregateDaemon, 
+                prediction_process = Process(target=run_aggregate_daemon, 
                                              args=(self.ml_queue[0],
-                                                   model_paths["Agg_Baseline"],
                                                    model_paths["Agg_Model"], 
                                                    model_paths["Agg_Featurized_Baseline"],
                                                    model_paths["Agg_output"]))
@@ -145,7 +144,7 @@ class PacketAnalyzer:
                 prediction_process.daemon = True
                 prediction_process.start()
                 
-                #LOR
+                # Per packet Local Outlier Factor
                 self.ml_queue.append(Queue())
                 prediction_process2 = Process(target=lorDaemon,
                                               args=(self.ml_queue[1], 

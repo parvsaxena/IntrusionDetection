@@ -1,13 +1,14 @@
 import argparse
+import pickle
 import os
 import numpy as np
 
 from datetime import datetime
 from multiprocessing import Process, Queue
 
-from PacketAggregate import *
-from predict_aggregate import MLPredictor
-from featurize_aggregate import featurize
+from BucketCollection import Bucket
+from MLPredictor import MLPredictor
+from featurize_aggregate import featurize, featurize_flows
 
 # Process packets and uses trained models
 class AggregateProcessor():
@@ -32,17 +33,16 @@ class AggregateProcessor():
         self.std = np.std(data, axis = 0)
 
         # Initialize current bucket and variables to keep track of it
-        self.curBkt = Bucket()
-        self.firstBucket = True
-        self.prevIndex = -1
+        self.cur = Bucket()
+        self.first_bkt = True
+        self.cur_index = -1
 
         self.predictors = []
         for filename in models:
-            self.predictors.append(MLPredictor(filename))
+            self.predictors.append(pickle.load(open(filename, 'rb')))
 
 
     def print_diff(self, vec):
-
         for (field, val, mu, sigma) in zip(self.names, vec, self.avg, self.std):
             # don't print out fields that have small differences
             if (sigma == 0):
@@ -62,53 +62,57 @@ class AggregateProcessor():
 
     def process(self, packet):
         time = packet['time']
-        index = int((time % self.interval) // (self.interval / self.n))
-        if (self.prevIndex != -1 and index != self.prevIndex and index != (self.prevIndex + 1) % self.n):
+        index = time // self.interval
+
+        # Very first packet we receive
+        if (self.cur_index == -1): self.cur_index = index
+
+        if (index != self.cur_index and index != self.cur_index + 1):
             print("out of order packet")
             return
 
-        if (index != self.prevIndex and self.prevIndex != -1):
-            if (not self.firstBucket):
+        # Bucket is completed
+        if (index != self.cur_index):
+            # Ignore first bucket because it is a partial bucket
+            if (not self.first_bkt):
                 # Predict using ml algorithms and show the diff if the majority predict abnormal
-                features = featurize(self.known, self.curBkt)
+                features = featurize(self.known, self.cur)
+                flow_features = featurize_flows(self.known, self.cur)
 
-                neg = []
+                fired_models = []
                 
                 num_abnormal = 0
                 for p in self.predictors:
-                    if (p.predict(features) == -1):
-                        neg.append(os.path.basename(p.model))
+                    if (p.predict(features, flow_features) == -1):
+                        fired_models.append(os.path.basename(p.name))
                         num_abnormal += 1
 
                 if (num_abnormal > len(self.predictors) // 2):
                     print("**** Last minute predicted abnormal ****", flush=True, file=self.out)
-                    self.printDiff(features)
+                    self.print_diff(features + flow_features)
 
                 else:
                     print("**** Last minute predicted normal ****", flush=True, file=self.out)
-                
-                print("Models that predicted abmormal: {}".format(str(neg)), flush=True, file=self.out)
 
-            else:
-                self.firstBucket = False
-            self.curBkt = Bucket()
+                print("Models that predicted abmormal: {}".format(str(fired_models)), flush=True, file=self.out)
 
-        self.curBkt.update(packet)
-        self.prevIndex = index
+            
+            self.first_bkt = False
+            self.cur = Bucket()
+
+        self.cur.insert_packet(packet)
+        self.cur_index = index
 
 
 # Starts an aggregate daemon
-#   baseline: The name of the baseline file (output of generate_baseline.py)
-#   data: the pickled data (output of featurize_baseline.py)
-#   models: list of filenames containing models  (output of train_baseline.py)
+#   data: the pickled data, used for output (output of featurize_aggregate.py)
+#   models: list of filenames containing models (output of train_aggregate.py)
+#   output_file: file to print results to
 # Example usage
 # aggregateDaemon(None, "baseline.out", "aggregate_features.pkl", ["aggregate_model.pkl"])
-def aggregateDaemon(queue, baseline, models, data, output_file):
-    # baseline = pickle.load(open(baseline, 'rb')) 
-
-    p = AggregateProcessor(baseline, models, data, output_file)
+def run_aggregate_daemon(queue, models, data, output_file):
+    p = AggregateProcessor(models, data, output_file)
 
     while True:
-        # print("retreiving", flush=True, file=p.out)
         pkt = queue.get()
         p.process(pkt)

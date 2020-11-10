@@ -1,15 +1,16 @@
 import numpy as np
 import time
-
 import argparse
-
 import pickle
+
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
+
+from MLPredictor import MLPredictor 
 
 # Parse command line args
 parser = argparse.ArgumentParser(description='Train models on aggregate feature data')
@@ -79,7 +80,7 @@ if (test is not None):
 
 # Save model
 print('Writing to {}...'.format(args.output_file))
-pickle.dump((args.use_flows, scaler, pca, clf), open(args.output_file, 'wb'))
+pickle.dump(MLPredictor(clf, args.output_file, args.use_flows, scaler, pca), open(args.output_file, 'wb'))
 
 end=time.time()
 print("done, took {:.2f}s".format(end - start))

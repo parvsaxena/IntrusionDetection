@@ -7,15 +7,9 @@ model_paths = {
     #"LORProcessor" : "./../ml/packet/lor_euc.pkl",
     #"scaler" : "./../ml/packet/scaler_euc.pkl",
     "perPkt_output": "./perPkt_output.log",
-    "Agg_Baseline" : "./../ml/aggregate/baseline.out",
-    "Agg_Featurized_Baseline" : "./../ml/aggregate/aggregate_features.pkl",
+    "Agg_Featurized_Baseline" : "./../ml/aggregate/features.pkl",
     "Agg_Model" : [
-         "./../ml/aggregate/lof_nostd.pkl",
-         "./../ml/aggregate/lof.pkl",
-         "./../ml/aggregate/svm.pkl",
-         "./../ml/aggregate/ell.pkl",
-         "./../ml/aggregate/lof_pca20.pkl",
-         "./../ml/aggregate/svm_pca20.pkl",
+         "./../ml/aggregate/model.pkl",
     ],
     "Agg_output": "./aggregate_output.log"
 }
