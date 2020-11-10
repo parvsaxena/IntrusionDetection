@@ -3,10 +3,12 @@ import pickle
 import numpy
 from collections import defaultdict
 
-# define here to allow pickling
-def defaultVal():
+# define here to allow pickling, default function for default dictionaries
+def zero_val():
     return 0
 
+
+# Class to store counts of differnt types of packets over a specific time period
 class Bucket():
     # methods for manipulating the stats of a single period
     def __init__(self):
@@ -26,25 +28,25 @@ class Bucket():
         # define fields we want to count the number of instances of each category
         # correspond to categorical fields in db
         self.categoryCounts = {
-            'ip_src' : defaultdict(defaultVal),
-            'ip_dst' : defaultdict(defaultVal),
-            'udp_src_port' : defaultdict(defaultVal),
-            'udp_dst_port' : defaultdict(defaultVal),
-            'udp_len' : defaultdict(defaultVal),
-            'mac_src' : defaultdict(defaultVal),
-            'mac_dst' : defaultdict(defaultVal),
+            'ip_src' : defaultdict(zero_val),
+            'ip_dst' : defaultdict(zero_val),
+            'udp_src_port' : defaultdict(zero_val),
+            'udp_dst_port' : defaultdict(zero_val),
+            'udp_len' : defaultdict(zero_val),
+            'mac_src' : defaultdict(zero_val),
+            'mac_dst' : defaultdict(zero_val),
         }
 
         self.flows = {
-            ('ip_src', 'ip_dst') : defaultdict(defaultVal),
-            ('mac_src', 'mac_dst') : defaultdict(defaultVal),
+            ('ip_src', 'ip_dst') : defaultdict(zero_val),
+            ('mac_src', 'mac_dst') : defaultdict(zero_val),
         }
 
-    def isZero(self):
+    def is_zero(self):
         return self.total == 0
 
     # Add one packet to stats
-    def update(self, packet):
+    def insert_packet(self, packet):
         self.total += 1
         
         for field in self.pktCounts:
@@ -73,29 +75,19 @@ class Bucket():
         ret += str(self.flows) + "\n";
         return ret
 
-# aggregate stats
-# m intervals of n buckets each
-class PacketAggregate():
-    def __init__(self, interval, m, n):
-        self.buckets = [[Bucket() for i in range(n)] for i in range(m)]
+# Essentially an array of buckets, where each bucket covers `interval` (time in seconds)
+class BucketCollection():
+    def __init__(self, interval, n):
+        self.buckets = [Bucket() for i in range(n)]
         self.interval = interval
-        self.m = m
-        self.n = n
 
-    def update(self, packet, index):
-        self.buckets[index // self.n][index % self.n].update(packet)
+    def insert_packet(self, packet, index):
+        self.buckets[index].insert_packet(packet)
 
     def print(self):
-        i = 0
-        for bs in self.buckets: 
-            print("================= INTERVAL {} =====================".format(i))
-            j = 0
-            for b in bs:
-                # if (b.isZero()): continue
-                print("------ Bucket {} ------".format(j))
-                print(b)
-                j += 1
-            i += 1
+        for (i, b) in enumerate(self.buckets): 
+            print("------ Bucket {} ------".format(i))
+            print(b)
 
     def save(self, filename):
         with open(filename, 'wb') as f:

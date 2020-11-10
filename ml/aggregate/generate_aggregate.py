@@ -1,79 +1,59 @@
 import argparse
+import math
 import psycopg2
 from psycopg2.extras import DictCursor
 
 from datetime import datetime
 
-from PacketAggregate import *
+from BucketCollection import *
 
-'''
-This script reads from the table of packet_features (i.e. packets with parsed header values) and creates
-an "aggregate" object, which is essentially counts of certain features over different time periods.
-'''
-
+# This script reads from the table of packet_features (i.e. packets with parsed header values) and creates
+# an "aggregate" object, which is essentially counts of certain features over different time periods.
 
 # Parse command line args
 parser = argparse.ArgumentParser(description='Anomaly based intrusion detection baseline generator')
-parser.add_argument('--interval', default=60, type=int, help='overall interval to collect in minutes')
-parser.add_argument('--buckets', default=60, type=int, help='number of buckets over interval to aggregate stats in')
+parser.add_argument('--interval', default=60, type=int, help='Bucket interval in seconds')
+parser.add_argument('--rowSize', default=60, type=int, help='number of buckets per row of bucket collection')
+parser.add_argument('--out', default='buckets.pkl', help='filename of output (pickled object)')
+
 parser.add_argument('--dbName', default='scada', help='name of database to pull statistics from')
-parser.add_argument('--statsFile', default='baseline.out', help='filename of output (pickled object)')
+parser.add_argument('--dbUsers', default='scada', help='name of database to pull statistics from')
 parser.add_argument('--table', default='packet_feat', help='table to look at')
 
 args = parser.parse_args();
-# convert interval to seconds
-args.interval = 60 * args.interval
-
 
 # set up db
 conn = psycopg2.connect('dbname={} user=mini'.format(args.dbName))
-firstCur = conn.cursor()
+time_cur = conn.cursor()
 cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
 # setup the cursor
 cur.execute("SELECT * FROM {}".format(args.table))
 
 # get the time of the first packet
-firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MIN(time) FROM {0});".format(args.table))
-if (firstCur.rowcount == 0):
+time_cur.execute("SELECT time FROM {0} WHERE time = (SELECT MIN(time) FROM {0});".format(args.table))
+if (time_cur.rowcount == 0):
     print("No rows in packet_feat!")
     exit(1)
-minTime = int(float(firstCur.fetchone()[0]))
-firstCur.execute("SELECT time FROM {0} WHERE time = (SELECT MAX(time) FROM {0});".format(args.table))
-maxTime = int(float(firstCur.fetchone()[0]))
-firstCur.close()
+min_time = int(float(time_cur.fetchone()[0]))
+time_cur.execute("SELECT time FROM {0} WHERE time = (SELECT MAX(time) FROM {0});".format(args.table))
+max_time = int(float(time_cur.fetchone()[0]))
+time_cur.close()
 
-# round minTime/maxTime to nearest interval
-minTime = (minTime // (args.interval)) * args.interval
-maxTime = (maxTime // (args.interval)) * args.interval
+total_buckets = (max_time - min_time) // args.interval + 1
+stats = BucketCollection(args.interval, total_buckets)
 
-
-# m is number of total intervals (ie. hours by default), nubmer of buckets at each slot
-# n is number of bukcet per interval 
-# time that one bucket represents
-# our data is an m x n array of buckets
-m = 1 + (maxTime - minTime) // args.interval
-n = args.buckets
-bucketInterval = args.interval / args.buckets
-stats = PacketAggregate(args.interval, m, n)
-
-print("constants")
-print(m, n, bucketInterval, stats)
+print("Created {} buckets of length {} seconds".format(total_buckets, args.interval))
+print("Filling buckets...")
 
 # Start looking at table
-prevIndex = -1
-firstBucket = True
-iterations = 0
-
-for row in cur:
-    # timestamp in seconds since minTime 
-    time = int(float(row[1])) - minTime    
-    index = int(time / bucketInterval)
-
-    # update appropriate packet
-    stats.update(row, index) 
+for pkt in cur:
+    # timestamp in seconds since min_time 
+    time = int(float(pkt[1])) - min_time    
+    index = time // args.interval
+    stats.insert_packet(pkt, index) 
    
 stats.print()
-stats.save(args.statsFile)
+stats.save(args.out)
 
 conn.commit()
 conn.close()

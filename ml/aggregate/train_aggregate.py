@@ -11,16 +11,11 @@ from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
 
-
-if __name__ != '__main__':
-    print('featurize_aggregate.py: should be run as a script')
-    exit(1)
-
 # Parse command line args
 parser = argparse.ArgumentParser(description='Train models on aggregate feature data')
-parser.add_argument('--features', default='./aggregate_features.pkl', help='pickled features object')
-parser.add_argument('--model', default='./aggregate_model.pkl', help='output, pickled model')
-parser.add_argument('--algorithm', choices=['lof', 'svm', 'cov'], help='algorithm to train on')
+parser.add_argument('training_data', default='./features.pkl', help='pickled training data, outputted by featurize_aggregate.py')
+parser.add_argument('output_file', default='./model.pkl', help='output, pickled model')
+parser.add_argument('algorithm', choices=['lof', 'svm', 'cov'], help='algorithm to train on')
 parser.add_argument('--use_flows', action='store_true', help='whether to use the flow related features in the data')
 parser.add_argument('--no_standardize', action='store_false', help='whether to standardize vectors')
 parser.add_argument('--pca', default='0', type=int, help='number of components to run PCA on')
@@ -28,21 +23,20 @@ parser.add_argument('--test_split', default='0', type=float, help='percentage of
 
 args = parser.parse_args();
 
-f = open(args.features, "rb")
-(known, names, data) = pickle.load(f)
+f = open(args.training_data, "rb")
+(_, _, _, data, _, flow_data) = pickle.load(f)
 
-# TODO Note this is hard coded to remove last 18 features because there are 18 features in featurize_aggregate.py
-if (not args.use_flows):
-    print("removing flow features")
-    data = data[:, :-18]
-
+# Concat flow_data to each vector
+if (args.use_flows):
+    print("Adding flow features...")
+    data = np.concatenate((data, flow_data), axis=1)
 
 start = time.time()
 
 # Standardize data (becomes mean 0 variance 1 for each feature)
 scaler = None
-if (args.no_standardize):
-    print("Standardizing data")
+if (not args.no_standardize):
+    print("Standardizing data...")
     scaler = StandardScaler().fit(data)
     data = scaler.transform(data)
 
@@ -60,12 +54,12 @@ if (args.test_split == 0):
 else:
     train, test = train_test_split(data, test_size=args.test_split)
 
+clf = None
 # Fit classifier
 if (args.algorithm == 'lof'):
     clf = LocalOutlierFactor(n_neighbors=30,novelty=True)
     clf.fit(train)
     X_scores = clf.negative_outlier_factor_
-    print(X_scores)
 elif (args.algorithm == 'svm'):
     clf = svm.OneClassSVM(nu=0.1, gamma=0.01)
     clf.fit(train)
@@ -77,15 +71,16 @@ elif (args.algorithm == 'cov'):
 if (test is not None):
     results = clf.predict(test)
     num_correct = np.count_nonzero(results + 1)
-    print('{}/{} of test data correct {:.2f}'.format(
+    print('{}/{} of dev data correct {:.2f}'.format(
         num_correct, 
         len(results), 
         num_correct/len(results)
     ))
 
 # Save model
-pickle.dump((not args.use_flows, scaler, pca, clf), open(args.model, 'wb'))
+print('Writing to {}...'.format(args.output_file))
+pickle.dump((args.use_flows, scaler, pca, clf), open(args.output_file, 'wb'))
 
 end=time.time()
-print("Fitting done, took {:.2f}s".format(end - start))
+print("done, took {:.2f}s".format(end - start))
 

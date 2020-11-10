@@ -12,26 +12,24 @@ from featurize_aggregate import featurize
 # Process packets and uses trained models
 class AggregateProcessor():
 
-    # Given the filenames of data/output log, creates processor
-    #   baseline    - output of generate_aggregate.py 
-    #   models      - output of train_aggregate.py
-    #   data        - output of featurize_aggregate.py
-    #   output_file - file that this prints to
-    def __init__(self, baseline, models, data, output_file):
-        self.out = open(output_file, 'w+')
+    # Given the filenames of data, creates processor
+    #   models      - array of model filenames, i.e. output(s) of train_aggregate.py
+    #   data        - filename contiaing the data, i.e. output of featurize_aggregate.py
+    #   out - file that this prints to (can be stdout)
+    def __init__(self, models, data, out):
+        self.out = open(out, 'w+')
         
         print("Aggregate Predictor Started", flush=True, file=self.out)
 
         # Load training data so we can make comparisons
-        (self.known, self.names, data) = pickle.load(open(data, 'rb'))
+        (self.interval, self.known, names, data, flow_names, flow_data) = pickle.load(open(data, 'rb'))
+        
+        # Combine data and flow data for avgs and standard deviation ouputs, even if models don't use it
+        data = np.concatenate((data, flow_data), axis = 1)
+        self.names = names + flow_names
 
         self.avg = np.average(data, axis = 0)
         self.std = np.std(data, axis = 0)
-
-        # Load baseline because we need to know bucket size 
-        baseline = pickle.load(open(baseline, 'rb'))
-        self.interval = baseline.interval
-        self.n = baseline.n
 
         # Initialize current bucket and variables to keep track of it
         self.curBkt = Bucket()
@@ -43,7 +41,7 @@ class AggregateProcessor():
             self.predictors.append(MLPredictor(filename))
 
 
-    def printDiff(self, vec):
+    def print_diff(self, vec):
 
         for (field, val, mu, sigma) in zip(self.names, vec, self.avg, self.std):
             # don't print out fields that have small differences

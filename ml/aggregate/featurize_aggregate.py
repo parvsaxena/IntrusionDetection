@@ -56,26 +56,6 @@ def get_feature_names(known, bucket):
         if (field == 'udp_len'):
             section = [field + '/' + str(feat) for feat in known['udp_len']]
         names += section + [field + '/other']
-
-    names += ['scada_ip -> scada_ip']
-    names += ['scada_ip -> mini_ip']
-    names += ['scada_ip -> other_ip']
-    names += ['mini_ip -> scada_ip']
-    names += ['mini_ip -> mini_ip']
-    names += ['mini_ip -> other_ip']
-    names += ['other_ip -> scada_ip']
-    names += ['other_ip -> mini_ip']
-    names += ['other_ip -> other_ip']
-
-    names += ['scada_mac -> scada_mac']
-    names += ['scada_mac -> mini_mac']
-    names += ['scada_mac -> other_mac']
-    names += ['mini_mac -> scada_mac']
-    names += ['mini_mac -> mini_mac']
-    names += ['mini_mac -> other_mac']
-    names += ['other_mac -> scada_mac']
-    names += ['other_mac -> mini_mac']
-    names += ['other_mac -> other_mac']
     return names
 
 # Converts a bucket of packet counts into a feature vector, given a list of known
@@ -110,11 +90,38 @@ def featurize(known, bucket):
             place_feature(known_vals, feature, cnt, row_section)
         
         row += (row_section)
+    return row
 
+def get_flow_feature_names():
+    names = [
+        'scada_ip -> scada_ip',
+        'scada_ip -> mini_ip',
+        'scada_ip -> other_ip',
+        'mini_ip -> scada_ip',
+        'mini_ip -> mini_ip',
+        'mini_ip -> other_ip',
+        'other_ip -> scada_ip',
+        'other_ip -> mini_ip',
+        'other_ip -> other_ip',
+
+        'scada_mac -> scada_mac',
+        'scada_mac -> mini_mac',
+        'scada_mac -> other_mac',
+        'mini_mac -> scada_mac',
+        'mini_mac -> mini_mac',
+        'mini_mac -> other_mac',
+        'other_mac -> scada_mac',
+        'other_mac -> mini_mac',
+        'other_mac -> other_mac'
+    ]
+    return names
+
+def featurize_flows(known, bucket):
     
     # Add ip_flows
     ip_flows = bucket.flows[('ip_src', 'ip_dst')] 
 
+    row =[]
     row_section = [0] * 9
     for (src, dst), value in ip_flows.items():
         srci = 2 # other
@@ -126,6 +133,7 @@ def featurize(known, bucket):
         if (dst in known['mini_ip']): dsti = 1
         
         row_section[srci * 3 + dsti] += value
+
     row += row_section
 
     # add mac_flows
@@ -149,9 +157,9 @@ def featurize(known, bucket):
 if __name__ == '__main__':
 
     # Parse command line args
-    parser = argparse.ArgumentParser(description='Generate feature vector from vector of baseline measurements')
-    parser.add_argument('--baseline', default='./baseline.out', help='pickled baseline object')
-    parser.add_argument('--output', default='./aggregate_features.pkl', help='pickled baseline object')
+    parser = argparse.ArgumentParser(description='Generate feature vectors from buckets genearted from database')
+    parser.add_argument('--buckets', default='./buckets.pkl', help='pickled BucketCollection object')
+    parser.add_argument('--output', default='./features.pkl', help='where to output feature vector')
 
     args = parser.parse_args();
 
@@ -159,11 +167,11 @@ if __name__ == '__main__':
     ips = [
         '128.220.221.91',
         '128.220.221.92', 
-        #'128.220.221.93', 
+        '128.220.221.93', 
         '128.220.221.94',
         '128.220.221.95', 
         '128.220.221.96',
-        # '128.220.221.15',
+        '128.220.221.15',
         '128.220.221.16',
         '128.220.221.17'
     ]
@@ -173,32 +181,27 @@ if __name__ == '__main__':
     macs = [
         '00:22:4d:b8:6f:04',
         '00:22:4d:b8:6f:a5',
-        #'00:22:4d:b7:64:32',
+        '00:22:4d:b7:64:32',
         '00:22:4d:b8:70:0c',
         '00:22:4d:d0:88:58',
         '00:22:4d:d0:88:74',
-        #'00:22:4d:b5:86:75',
+        '00:22:4d:b5:86:75',
         '00:22:4d:b5:86:8b',
         '00:22:4d:b5:86:67'
     ]
     scada_mac = macs[:-2]
     mini_mac = macs[-2:]
 
-    f = open(args.baseline, 'rb')
-    baseline = pickle.load(f)
+    f = open(args.buckets, 'rb')
+    bkt_collection = pickle.load(f)
 
     # Flatten buckets from baseline
     bkts = []
-    lastBkt = None
-    for interval in baseline.buckets:
-        for b in interval:
-            if (b.isZero()):
-                continue
-            bkts.append(b)
+    for b in bkt_collection.buckets:
+        bkts.append(b)
 
-    # remove partial buckets
+    # remove partial bucket at end (since it doesn't contain a full interval of data)
     bkts.pop(len(bkts) - 1)
-    bkts.pop(0)
     
     # build features
     known = get_common_labels(bkts)
@@ -210,22 +213,20 @@ if __name__ == '__main__':
     known['scada_mac'] = scada_mac
     known['mini_mac'] = mini_mac
 
-    print(bkts[0].flows)
     
-    # build array
+    # build matrix of training data. Keep flow_data separate
     data = []
+    flow_data = []
     for b in bkts:
         data.append(featurize(known, b))
+        flow_data.append(featurize_flows(known, b))
     
     data = np.array(data)
     names = get_feature_names(known, bkts[0])
+    flow_names = get_flow_feature_names()
 
-    print(names)
-    print(len(names))
     print('number of data points:', len(data))
-    print(data)
-    print({n:v for n, v in zip(names, data[0])})
 
-    # save array
+    # save array and known features
     with open(args.output, 'wb') as f:
-        pickle.dump((known, names, data), f)
+        pickle.dump((bkt_collection.interval, known, names, data, flow_names, flow_data), f)
