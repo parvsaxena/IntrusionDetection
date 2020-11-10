@@ -13,7 +13,7 @@ from scapy.data import ETHER_TYPES
 
 # sys.path.append('./../')
 
-class LORProcessor():
+class LOFProcessor():
     def __init__(self, pkl_filename,pkl_scaler,output_file):
         self.out = open(output_file, 'w+')
         self.fields={}
@@ -58,7 +58,7 @@ class LORProcessor():
                 print(summaries,file=self.out,flush=True)
         
 
-def lorDaemon(queue, pkl_filename,pkl_scaler,output_file):
+def per_pkt_daemon(queue, pkl_filename,pkl_scaler,output_file):
     '''
     conn=psycopg2.connect('dbname={} user=mini'.format("scada"))
 
@@ -73,9 +73,8 @@ def lorDaemon(queue, pkl_filename,pkl_scaler,output_file):
         fields[index]=f
     print(fields.values())
     '''
-    # pkl_filename = "lor_distinct_model.pkl"
-    lor = LORProcessor(pkl_filename,pkl_scaler,output_file)
-    print("LOR Daemon called",file=lor.out,flush=True)
+    lof = LOFProcessor(pkl_filename,pkl_scaler,output_file)
+    print("LOF Daemon called",file=lof.out,flush=True)
 
     while True:
         parsed_pkt =queue.get()
@@ -90,8 +89,8 @@ def lorDaemon(queue, pkl_filename,pkl_scaler,output_file):
         if parsed_pkt.get('arp_pdst',"")=="128.220.221.1":
             continue  
         """
-        lor.process(parsed_pkt)
-        if len(lor.X)>100:
-            lor.predict()
-            lor.X=[]
-            lor.parsed_pkts=[]
+        lof.process(parsed_pkt)
+        if len(lof.X)>100:
+            lof.predict()
+            lof.X=[]
+            lof.parsed_pkts=[]

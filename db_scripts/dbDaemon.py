@@ -1,6 +1,7 @@
 import psycopg2
 from multiprocessing import Process, Queue
-import atexit, os, signal
+import os, signal
+
 query1 = "INSERT INTO packet_raw (raw, time, is_training) VALUES (%s, %s, %s) RETURNING id"
 
 query2 = "WITH row AS ({}) \
@@ -16,7 +17,7 @@ def bytea2bytes(value, cur):
     if m is not None:
         return m.tobytes()
 
-def dbDaemon(queue, dbName="scada"):
+def db_insertion_daemon(queue, dbName="scada2"):
     db = dbDriver(dbName)
     print("Daemon created")
 
@@ -26,7 +27,7 @@ def dbDaemon(queue, dbName="scada"):
             parsed_pkt = queue.get()
             raw_dump = parsed_pkt.pop('raw')
             db.insert_packet(raw_dump, parsed_pkt)
-        print("Close gets called")
+        print("Closing ")
         db.close()
         exit(0)
 
@@ -50,7 +51,6 @@ class dbDriver():
     
     # insert packet passed as dictionary, with fields corr. to column names
     def insert_packet(self, raw, features, retry=False):
-        # print("**********Insertion called") 
         try:
             subquery = self.cur.mogrify(query1, (raw, features['time'], features['is_training']))
             subquery = subquery.decode()
@@ -67,29 +67,23 @@ class dbDriver():
             if  self.counter % 1000 == 0:
                 self.conn.commit()
             self.counter += 1
+
         except psycopg2.InterfaceError:
+            # Attempt to reopen pointer
             self.cur.close()    
             self.cur = conn.cursor()
             self.insert_packet(raw, features, True)
    
     def read_one_pkt_raw(self):
-        # self.cur.execute("SELECT COUNT(*) FROM packet_raw")
-        # print("packet_raw exists already exists with {} rows".format(self.cur.fetchone()[0]))
         self.cur.execute("SELECT * FROM packet_raw")    
         return self.cur.fetchone()
     def read_one_pkt_features(self):
-        # self.cur.execute("SELECT COUNT(*) FROM packet_raw")
-        # print("packet_raw exists already exists with {} rows".format(self.cur.fetchone()[0]))
         self.cur.execute("SELECT * FROM packet_feat")    
         return self.cur.fetchone()
     def read_all_pkt_raw(self):
-        self.cur.execute("SELECT COUNT(*) FROM packet_raw")
-        print("packet_raw exists already exists with {} rows".format(self.cur.fetchone()[0]))
         self.cur.execute("SELECT * FROM packet_raw")    
         return self.cur.fetchall()
     def read_all_pkt_features(self):
-        self.cur.execute("SELECT COUNT(*) FROM packet_feat")
-        print("packet_raw exists already exists with {} rows".format(self.cur.fetchone()[0]))
         self.cur.execute("SELECT * FROM packet_feat")    
         return self.cur.fetchall()
     

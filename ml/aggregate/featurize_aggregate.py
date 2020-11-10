@@ -175,8 +175,8 @@ if __name__ == '__main__':
         '128.220.221.16',
         '128.220.221.17'
     ]
-    scada_ip = ips[:-2]
-    mini_ip = ips[-2:]
+    scada_ip = ips[:-3]
+    mini_ip = ips[-3:]
 
     macs = [
         '00:22:4d:b8:6f:04',
@@ -189,8 +189,8 @@ if __name__ == '__main__':
         '00:22:4d:b5:86:8b',
         '00:22:4d:b5:86:67'
     ]
-    scada_mac = macs[:-2]
-    mini_mac = macs[-2:]
+    scada_mac = macs[:-3]
+    mini_mac = macs[-3:]
 
     f = open(args.buckets, 'rb')
     bkt_collection = pickle.load(f)

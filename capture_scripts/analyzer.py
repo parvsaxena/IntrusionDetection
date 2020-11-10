@@ -1,7 +1,5 @@
 import sys
 sys.path.append('./../db_scripts/')
-sys.path.append('./../anomaly_scripts/')
-sys.path.append('./../')
 sys.path.append('./../ml/packet')
 sys.path.append('./../ml/aggregate/')
 
@@ -9,11 +7,13 @@ from scapy.all import *
 from scapy.layers.l2 import Ether
 from scapy.layers.inet import IP, TCP, UDP, ICMP, icmptypes
 from scapy.data import ETHER_TYPES
+
+from dbDaemon import db_insertion_daemon
+from PerPktDaemon import per_pkt_daemon
+from AggregateDaemon import aggregate_daemon
+from config import config
+
 from multiprocessing import Process, Queue
-from dbDaemon import dbDriver, dbDaemon
-from perPktDaemon import lorDaemon, LORProcessor
-from aggregate_daemon import run_aggregate_daemon
-from config import model_paths
 import argparse
 import pickle
 import os
@@ -117,22 +117,21 @@ class PacketAnalyzer:
             
             # Aggregate based daemon
             self.prediction_queues.append(Queue())
-            prediction_process = Process(target=run_aggregate_daemon, 
+            prediction_process = Process(target=aggregate_daemon, 
                                          args=(self.prediction_queues[0],
-                                               model_paths["Agg_Model"], 
-                                               model_paths["Agg_Featurized_Baseline"],
-                                               model_paths["Agg_output"]))
-            
+                                               config["aggregate"]["models"], 
+                                               config["aggregate"]["training_data"], 
+                                               config["aggregate"]["output"]))
             prediction_process.daemon = True
             prediction_process.start()
             
             # Per packet Local Outlier Factor
             self.prediction_queues.append(Queue())
-            prediction_process2 = Process(target=lorDaemon,
+            prediction_process2 = Process(target=per_pkt_daemon,
                                           args=(self.prediction_queues[1], 
-                                                model_paths["LORProcessor"],
-                                                model_paths["scaler"],
-                                                model_paths["perPkt_output"]))
+                                                config["per_pkt"]["model"],
+                                                config["per_pkt"]["scaler"],
+                                                config["per_pkt"]["output"]))
             
             # print("Creating lor ", prediction_process2.name, prediction_process2.pid)
             prediction_process2.daemon = True
@@ -140,7 +139,7 @@ class PacketAnalyzer:
             
         else:
             self.insert_queue = Queue()
-            db_insertion_process = Process(target=dbDaemon, 
+            db_insertion_process = Process(target=db_insertion_daemon, 
                                            args=(self.insert_queue,))
             print("Creating",  db_insertion_process.name, db_insertion_process.pid)
             db_insertion_process.daemon = True

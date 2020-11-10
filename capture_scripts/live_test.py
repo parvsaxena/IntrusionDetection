@@ -18,10 +18,7 @@ baseline = None
 #     baseline = pickle.load(f)
 
 
-pkt_analyzer = PacketAnalyzer(run_in_bg = True,
-                              is_training_mode = False,
-                              disable_db_insertion = True,
-                              baseline = baseline)
+pkt_analyzer = PacketAnalyzer(is_training_mode = False)                           
 
 
 filter = "src port not 8001"

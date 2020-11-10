@@ -15,10 +15,7 @@ count = 0
 
 baseline = None
 
-pkt_analyzer = PacketAnalyzer(run_in_bg = True,
-                              is_training_mode = True,
-                              disable_db_insertion = False,
-                              baseline = baseline)
+pkt_analyzer = PacketAnalyzer(is_training_mode = True)
 
 
 # Currently filtering/avoiding traffic to/from mini1, and that of ssh(port 8001)

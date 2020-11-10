@@ -55,9 +55,9 @@ if  __name__=='__main__':
     clf=LocalOutlierFactor(n_neighbors=1,novelty=True,metric='cosine')
     clf.fit(vecs)
     print("Fitting done")
-    pkl_filename = "lor_distinct_model.pkl"
+    pkl_filename = "lof_distinct_model.pkl"
     pickle.dump(clf, open(pkl_filename, 'wb'))
-    pkl_scaler = "lor_scaler.pkl"
+    pkl_scaler = "lof_scaler.pkl"
     pickle.dump(scaler, open(pkl_scaler, 'wb'))
     end=time.time()
     # print(end-start) 

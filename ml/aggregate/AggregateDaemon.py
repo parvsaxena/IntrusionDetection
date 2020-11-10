@@ -110,7 +110,7 @@ class AggregateProcessor():
 #   output_file: file to print results to
 # Example usage
 # aggregateDaemon(None, "baseline.out", "aggregate_features.pkl", ["aggregate_model.pkl"])
-def run_aggregate_daemon(queue, models, data, output_file):
+def aggregate_daemon(queue, models, data, output_file):
     p = AggregateProcessor(models, data, output_file)
 
     while True:
