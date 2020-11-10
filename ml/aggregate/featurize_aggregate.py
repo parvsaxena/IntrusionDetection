@@ -2,9 +2,9 @@ import sys
 
 import argparse
 import numpy as np
-
 import pickle
-import sklearn.preprocessing
+
+import spire_config
 
 # get the set of known/unknown labels for udp fields by seeing which
 # values are common across all buckets
@@ -94,24 +94,24 @@ def featurize(known, bucket):
 
 def get_flow_feature_names():
     names = [
-        'scada_ip -> scada_ip',
-        'scada_ip -> mini_ip',
-        'scada_ip -> other_ip',
-        'mini_ip -> scada_ip',
-        'mini_ip -> mini_ip',
-        'mini_ip -> other_ip',
-        'other_ip -> scada_ip',
-        'other_ip -> mini_ip',
+        'sm_ip -> sm_ip',
+        'sm_ip -> client_ip',
+        'sm_ip -> other_ip',
+        'client_ip -> sm_ip',
+        'client_ip -> client_ip',
+        'client_ip -> other_ip',
+        'other_ip -> sm_ip',
+        'other_ip -> client_ip',
         'other_ip -> other_ip',
 
-        'scada_mac -> scada_mac',
-        'scada_mac -> mini_mac',
-        'scada_mac -> other_mac',
-        'mini_mac -> scada_mac',
-        'mini_mac -> mini_mac',
-        'mini_mac -> other_mac',
-        'other_mac -> scada_mac',
-        'other_mac -> mini_mac',
+        'sm_mac -> sm_mac',
+        'sm_mac -> client_mac',
+        'sm_mac -> other_mac',
+        'client_mac -> sm_mac',
+        'client_mac -> client_mac',
+        'client_mac -> other_mac',
+        'other_mac -> sm_mac',
+        'other_mac -> client_mac',
         'other_mac -> other_mac'
     ]
     return names
@@ -126,11 +126,11 @@ def featurize_flows(known, bucket):
     for (src, dst), value in ip_flows.items():
         srci = 2 # other
         dsti = 2
-        if (src in known['scada_ip']): srci = 0
-        if (dst in known['scada_ip']): dsti = 0
+        if (src in known['sm_ip']): srci = 0
+        if (dst in known['sm_ip']): dsti = 0
 
-        if (src in known['mini_ip']): srci = 1
-        if (dst in known['mini_ip']): dsti = 1
+        if (src in known['client_ip']): srci = 1
+        if (dst in known['client_ip']): dsti = 1
         
         row_section[srci * 3 + dsti] += value
 
@@ -143,11 +143,11 @@ def featurize_flows(known, bucket):
     for (src, dst), value in mac_flows.items():
         srci = 2 # other
         dsti = 2
-        if (src in known['scada_mac']): srci = 0
-        if (dst in known['scada_mac']): dsti = 0
+        if (src in known['sm_mac']): srci = 0
+        if (dst in known['sm_mac']): dsti = 0
 
-        if (src in known['mini_mac']): srci = 1
-        if (dst in known['mini_mac']): dsti = 1
+        if (src in known['client_mac']): srci = 1
+        if (dst in known['client_mac']): dsti = 1
         row_section[srci * 3 + dsti] += value
     row += row_section
 
@@ -163,35 +163,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args();
 
-    # Define known settings ips and mac addresses
-    ips = [
-        '128.220.221.91',
-        '128.220.221.92', 
-        '128.220.221.93', 
-        '128.220.221.94',
-        '128.220.221.95', 
-        '128.220.221.96',
-        '128.220.221.15',
-        '128.220.221.16',
-        '128.220.221.17'
-    ]
-    scada_ip = ips[:-3]
-    mini_ip = ips[-3:]
-
-    macs = [
-        '00:22:4d:b8:6f:04',
-        '00:22:4d:b8:6f:a5',
-        '00:22:4d:b7:64:32',
-        '00:22:4d:b8:70:0c',
-        '00:22:4d:d0:88:58',
-        '00:22:4d:d0:88:74',
-        '00:22:4d:b5:86:75',
-        '00:22:4d:b5:86:8b',
-        '00:22:4d:b5:86:67'
-    ]
-    scada_mac = macs[:-3]
-    mini_mac = macs[-3:]
-
     f = open(args.buckets, 'rb')
     bkt_collection = pickle.load(f)
 
@@ -205,13 +176,14 @@ if __name__ == '__main__':
     
     # build features
     known = get_common_labels(bkts)
-    known['ip'] = ips
-    known['mac'] = macs
-    known['scada_ip'] = scada_ip
-    known['mini_ip'] = mini_ip
+    known['ip'] = spire_config.ips
+    known['mac'] = spire_config.macs
 
-    known['scada_mac'] = scada_mac
-    known['mini_mac'] = mini_mac
+    known['sm_ip'] = spire_config.sm_ips
+    known['client_ip'] = spire_config.client_ips
+    known['sm_mac'] = spire_config.sm_macs
+    known['client_mac'] = spire_config.client_macs
+
 
     
     # build matrix of training data. Keep flow_data separate
