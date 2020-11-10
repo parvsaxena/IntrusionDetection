@@ -19,7 +19,7 @@ def bytea2bytes(value, cur):
 def dbDaemon(queue, dbName="scada"):
     db = dbDriver(dbName)
     print("Daemon created")
-    # atexit.register(close_db, db)
+
     def close_db(*args):
         print("Inserting rest of queue")
         while not queue.empty():
@@ -34,9 +34,7 @@ def dbDaemon(queue, dbName="scada"):
     signal.signal(signal.SIGTERM, close_db)
   
     while True:
-        # print("Getting from queue")
         parsed_pkt = queue.get()
-        # print("dict is", parsed_pkt)
         raw_dump = parsed_pkt.pop('raw')
         db.insert_packet(raw_dump, parsed_pkt)
 
