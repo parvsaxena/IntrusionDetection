@@ -72,7 +72,7 @@ To create models, given there are parsed packets in the database, follow the ste
 ```
 python generate_aggregate.py
 ```
-This will read from a default databse and output (by default) a file containing the buckets called `buckets.pkl`. These and other parameters can be viewed by running the script with `--help`,
+This will read from `packet_feat` and output (by default) a file containing the buckets called `buckets.pkl`. These and other parameters can be viewed by running the script with `--help`.
 ```
 python featurize_aggregate.py
 ```
