@@ -14,9 +14,9 @@ from MLPredictor import MLPredictor
 
 # Parse command line args
 parser = argparse.ArgumentParser(description='Train models on aggregate feature data')
-parser.add_argument('training_data', default='./features.pkl', help='pickled training data, outputted by featurize_aggregate.py')
-parser.add_argument('output_file', default='./model.pkl', help='output, pickled model')
+parser.add_argument('output_file', help='specifies output file that contains pickled model')
 parser.add_argument('algorithm', choices=['lof', 'svm', 'cov'], help='algorithm to train on')
+parser.add_argument('--training_data', default='./features.pkl', help='pickled training data, outputted by featurize_aggregate.py')
 parser.add_argument('--use_flows', action='store_true', help='whether to use the flow related features in the data')
 parser.add_argument('--no_standardize', action='store_false', help='whether to standardize vectors')
 parser.add_argument('--pca', default='0', type=int, help='number of components to run PCA on')
