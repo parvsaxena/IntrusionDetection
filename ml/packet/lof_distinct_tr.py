@@ -1,3 +1,7 @@
+"""
+Selects transformed features from per_packet and uses it to train scaler, LocalOutlierFactor model and write them to current folder
+"""
+
 import numpy as np
 import time
 import psycopg2
@@ -34,7 +38,6 @@ if  __name__=='__main__':
 
 
     cur = conn.cursor('cursor', cursor_factory=DictCursor) # server side cursor
-    # cur.execute("SELECT  * FROM distinct_feat LIMIT 5;")
     cur.execute("SELECT distinct * FROM per_packet;")
     vecs=[]
     for row in cur:

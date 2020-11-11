@@ -19,6 +19,7 @@ pkt_analyzer = PacketAnalyzer(is_training_mode = True)
 
 
 # Currently filtering/avoiding traffic to/from mini1, and that of ssh(port 8001)
+#Tiomeout is is set in sec to capture training traffic for that duration
 filter = "src port not 8001"
 filter += " and dst port not 8001"
 filter += " and ip host not 128.220.221.15"

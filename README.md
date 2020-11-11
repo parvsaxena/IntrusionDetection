@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Pre-requisites:
 - Python3.6 and above
 - Scapy
@@ -21,10 +22,10 @@ sudo apt install postgresql postgresql-contrib
 
 Create database users
 ```
-sudo -u postgres psql
-sudo -u postgres createdb scada
-create user mini;
-grant all privileges on database scada to mini;
+sudo -u postgres psql (gets psql cmd line)
+sudo -u postgres createdb scada (creates db scada)
+create user mini; (creates user mini without passwd)
+grant all privileges on database scada to mini; (Gives mini all rights on scada, we will use thins user in rest of the scripts)
 ```
 
 Create table

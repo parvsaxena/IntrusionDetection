@@ -1,5 +1,6 @@
 import sys
 sys.path.append('./../db_scripts/')
+sys.path.append('./../anomaly_scripts/'
 sys.path.append('./../')
 sys.path.append('./../ml/')
 
@@ -20,7 +21,8 @@ baseline = None
 
 pkt_analyzer = PacketAnalyzer(is_training_mode = False)                           
 
-
+#These filters can be changed to filter; currently set to filter out ssh to span connnected machine; If not needed delete filter.
+#Similarly timeout can be used to run monitor for limited duration, in sec. 
 filter = "src port not 8001"
 filter += " and dst port not 8001"
 filter += " and ip host not 128.220.221.15"

@@ -34,6 +34,7 @@ time_cur.execute("SELECT time FROM {0} WHERE time = (SELECT MIN(time) FROM {0});
 if (time_cur.rowcount == 0):
     print("No rows in packet_feat!")
     exit(1)
+
 min_time = int(float(time_cur.fetchone()[0]))
 time_cur.execute("SELECT time FROM {0} WHERE time = (SELECT MAX(time) FROM {0});".format(args.table))
 max_time = int(float(time_cur.fetchone()[0]))

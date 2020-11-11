@@ -1,3 +1,11 @@
+"""
+This daemon , loads Packet Analysis based model and scaler(pathe set in capture_scripts/model_paths.py)
+Then uses transform(in ml/packet/init) and gets feature vector.
+It baches 100 packets and runs prediction on each, finally outputs only DISTINCT attack packets in that batch.
+The attack predictions are written to output_file(capture_scripts/model_paths)
+
+"""
+
 import pickle
 from multiprocessing import Queue
 from __init__ import *
@@ -78,17 +86,7 @@ def per_pkt_daemon(queue, pkl_filename,pkl_scaler,output_file):
 
     while True:
         parsed_pkt =queue.get()
-        if Ether(parsed_pkt['raw']).haslayer(Dot3):
-            continue 
         
-        if parsed_pkt.get('arp_psrc',"")=="192.168.0.120":
-            continue
-        if parsed_pkt.get('mac_src')=="00:e1:6d:c3:bc:06":
-            continue
-        """ 
-        if parsed_pkt.get('arp_pdst',"")=="128.220.221.1":
-            continue  
-        """
         lof.process(parsed_pkt)
         if len(lof.X)>100:
             lof.predict()

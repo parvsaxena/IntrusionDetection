@@ -7,3 +7,4 @@ dump
 *.out
 *.pkl
 *.log
+.vscode/settings.json
