@@ -31,6 +31,9 @@ create user mini;
 grant all privileges on database scada to mini; 
 ```
 
+Note depending on your operating system, you may also need to adjust the permissions so that you can connect as the `mini`
+user.
+
 Then, use our scripts to create the appropriate tables
 ```
 cd db_scripts; 
@@ -41,17 +44,22 @@ Note: if previous tables already exist, then use `--recreate` option to drop and
 
 ## 2. Caputure Data
 
-Capture traffic and insert into db(raw packets and parsed packets)
+The following commands capture network traffic over a specified interface (`eth3`) and insert them into the `scada` db we made above. 
+Both raw and parsed packets into separate tables. By default, the script will timeout after `1 hour` but you can give
+a timeout in seconds by using the `--time` option.
 
-cd capture_scripts; sudo python train_live_capture.py &
+```
+cd capture_scripts
+sudo python live_capture.py eth3 &
+```
 
-Parameters in file:
-- `iface` - give the SPAN port interface
-- `timeout` - duration of traffic capture in seconds
-- `filter` - Edit if we need to filter capture traffic at sniffing level
+In the file, there is also a string called `pkt_filter` that can be used to filter traffic out for training. For example, we removed
+any SSH traffic during our training. An example is provided in the file, but more details about the sntax of the filter string can be
+found [here](https://biot.com/capstats/bpf.html).
 
-## 3. Explore Data
+## 3. Explore Data / Configure Models
 It is important to analyse the data captured. This will be helpful in feature engineering and parameter tuning
+
 
 ## 4. Training Models
 ### Traffic Pattern based ML models
@@ -112,15 +120,22 @@ check ips and mac addresses defined in init are correct.
 python featurize_per_pkt.py (This is feature engineering step)
 python lor_distinct_tr.py (This will generate the models)
 ```
-Append the model and normalizer file paths to model_paths.py file in capture_scripts directory.
 
 ## 5. Real time prediction
 
+The `live_test.py` script is very similar to the `live_capture.py` script described above, except that rather than insert packets
+into the database, it passes the packets to the trained models, which then output to log files. Also, by default it does not timeout 
+(though this can be changed with the same `--time` option).
+
+Before running, you must also change the `config.py` file, which specifies paths to the models, as well as auxialiary files for
+the different model types. Documentation for each parameter is included in the file.
+
+Following is an example of how to run the `live_test.py` script on the `eth3` interface, and also view its output in real time. 
 ```
 cd capture_scripts;
-sudo python test_capture_sahiti.py &
-tail -f  perPkt_output.log  - This will print Traffic Pattern ML predictions
-tail -f aggregate_output.log - This will print Packet Analysis based Ml predictions
+sudo python live_test.py eth3 &
+tail -f  perPkt_output.log 
+tail -f aggregate_output.log 
 ```
 
 ## 6. Tests and attacks
