@@ -73,9 +73,9 @@ The scripts in [`ml/aggregate`](ml/aggregate) are used to train such a model. Fo
 - `generate_aggregate.py`: Reads from database of parsed packets and generates buckets
 - `featurize_aggregate.py`: Converts buckets to vectors for training
 - `train_aggregate.py`: Trains models
-- `daemon.py`: Given a source of parsed packets, and a list of models, performs prediction. This consists of reading from the source, and once a bucket is completed, outputting the result from each model.
-
-Note: `featurize_aggregate.py` is hardcoded to work with the specific spire config of 6 replicas, 1 machine for the HMI, and 1 for proxies. The ip and mac address need to be edited
+- `AggregateDaemon.py`: Given a source (queue) of parsed packets, and a list of models, performs prediction. This consists of reading from the source, and once a bucket is completed, outputting the result from each model.
+- `spire_config.py`: Specifies a list of known ips and macs. When featurizing, the counts of these addresses are recorded separately, and all others are put into an `other` 
+category. Thererfore, **you need to edit this file in order for the models to be effective**. Essentially, any machines that have significant traffic on the network should probably be included. See inside for more documentation.
 
 To create models, given there are parsed packets in the database, follow the steps below
 ```
