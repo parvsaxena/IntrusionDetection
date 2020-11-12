@@ -17,7 +17,7 @@ def bytea2bytes(value, cur):
     if m is not None:
         return m.tobytes()
 
-def db_insertion_daemon(queue, dbName="scada2"):
+def db_insertion_daemon(queue, dbName="scada"):
     db = dbDriver(dbName)
     print("Daemon created")
 
@@ -42,7 +42,7 @@ def db_insertion_daemon(queue, dbName="scada2"):
 
 class dbDriver():
     def __init__(self, dbName):
-        self.conn = psycopg2.connect('dbname={} user=mini'.format(dbName))
+        self.conn = psycopg2.connect("dbname={} user='mini' host='localhost'".format(dbName))
         self.cur = self.conn.cursor()
         self.counter = 0
     

@@ -20,7 +20,6 @@ import os
 
 
 
-db_name = "scada"
 def expand(x):
     yield x.name
     while x.payload:
@@ -141,6 +140,7 @@ class PacketAnalyzer:
             print("Creating",  db_insertion_process.name, db_insertion_process.pid)
             db_insertion_process.daemon = True
             db_insertion_process.start()
+
 
         self.packet_count = 0
         self.is_training_mode = is_training_mode

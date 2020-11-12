@@ -5,13 +5,13 @@ config = {
     "per_pkt": {
         "model" : "./../ml/packet/lof_distinct_model.pkl",
         "scaler" : "./../ml/packet/lof_scaler.pkl",
-        "output": "./per_pkt_output.log",
+        "output": "per_pkt_output.log",
     },
     "aggregate": {
         "training_data" : "./../ml/aggregate/features.pkl",
         "models" : [
              "./../ml/aggregate/model.pkl",
         ],
-        "output": "./aggregate_output.log"
+        "output": "aggregate_output.log"
     }
 }

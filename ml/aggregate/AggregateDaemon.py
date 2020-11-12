@@ -16,9 +16,9 @@ class AggregateProcessor():
     # Given the filenames of data, creates processor
     #   models      - array of model filenames, i.e. output(s) of train_aggregate.py
     #   data        - filename contiaing the data, i.e. output of featurize_aggregate.py
-    #   out - file that this prints to (can be stdout)
+    #   out         - file that this prints to (can be stdout)
     def __init__(self, models, data, out):
-        self.out = open(out, 'w+')
+        self.out = open(out, 'w')
         
         print("Aggregate Predictor Started", flush=True, file=self.out)
 

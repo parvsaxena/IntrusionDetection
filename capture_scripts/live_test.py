@@ -1,39 +1,34 @@
 import sys
 sys.path.append('./../db_scripts/')
-sys.path.append('./../anomaly_scripts/'
+sys.path.append('./../anomaly_scripts/')
 sys.path.append('./../')
-sys.path.append('./../ml/')
+sys.path.append('./')
 
-
+import argparse
 import subprocess
 import shlex
 from scapy.all import *
 from analyzer import PacketAnalyzer
 import pickle
 
-# Change interface with any interface from tcpdump -D, or the one where you want to monitor. Can also provide list of interfaces
-count = 0
+parser = argparse.ArgumentParser(description='Script to capture traffic and insert into database for training')
+parser.add_argument('interface', help='Network interface to monitor')
+parser.add_argument('--timeout', default=0, type=int, help='time in seconds to capture packets, default 0 for no timeout')
 
-baseline = None
-# with open("./../anomaly_scripts/baseline.out", "rb") as f:
-#     baseline = pickle.load(f)
-
+args = parser.parse_args()
 
 pkt_analyzer = PacketAnalyzer(is_training_mode = False)                           
+pkt_filter = ""
 
-#These filters can be changed to filter; currently set to filter out ssh to span connnected machine; If not needed delete filter.
-#Similarly timeout can be used to run monitor for limited duration, in sec. 
-filter = "src port not 8001"
-filter += " and dst port not 8001"
-filter += " and ip host not 128.220.221.15"
-sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, filter=filter)
-#sniff(iface='eth3', store=0, prn=pkt_analyzer.process_packet, timeout = 60)
-print("Finishing up\n")
+# Below is an example of a possible packet filter, that removes traffic for ssh (port 8001) 
+# and from the monitoring machine (128.220.221.15) itself
+# pkt_filter = "src port not 8001"
+# pkt_filter += " and dst port not 8001"
+# pkt_filter += " and ip host not 128.220.221.15"
 
-# for pkt in sniff(iface='wlp58s0', store=0, prn=parse_packet):
-    # count = count + 1
-    # print("Packet no", count)
-    # print("Packet ether qualtities are", pkt.src, pkt.dst)
-    # parse_packet(pkt)
+if (args.timeout == 0): 
+    sniff(iface=args.interface, store=0, prn=pkt_analyzer.process_packet, filter=pkt_filter)
+else:
+    sniff(iface=args.interface, store=0, prn=pkt_analyzer.process_packet, timeout = args.timeout, filter=pkt_filter)
 
-
+print("Exiting\n")

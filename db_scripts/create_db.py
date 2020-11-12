@@ -9,8 +9,7 @@ parser.add_argument('--recreate', help="drop and cerate new tables", action='sto
 
 args = parser.parse_args()
 
-conn = psycopg2.connect('dbname='+ db_name +' user=mini')
-#conn = psycopg2.connect("dbname='scada' user='postgres' host='localhost'")
+conn = psycopg2.connect("dbname="+ db_name +" user='mini' host='localhost'")
 c = conn.cursor()
 
 if args.recreate: 
