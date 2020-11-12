@@ -19,19 +19,19 @@ sudo apt install postgresql postgresql-contrib
 /etc/init.d/postgresql start
 ```
 
-Create database users
+Then, create a database `scada` for the IDS system, and login to the `psql` prompt
 ```
-sudo -u postgres createdb scada (creates db scada)
-sudo -u postgres psql (gets psql cmd line)
-```
-
-Then, in the psql prompt:
-```
-create user mini; (creates user mini without passwd)
-grant all privileges on database scada to mini; (Gives mini all rights on scada, we will use thins user in rest of the scripts)
+sudo -u postgres createdb scada
+sudo -u postgres psql 
 ```
 
-Create table
+Then, in the psql prompt, create a user for the account you plan to use for the IDS, and give it permissions on the databse
+```
+create user mini;
+grant all privileges on database scada to mini; 
+```
+
+Then, use our scripts to create the appropriate tables
 ```
 cd db_scripts; 
 python3 createDB.py
