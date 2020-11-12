@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## Pre-requisites:
 - Python3.6 and above
 - Scapy
