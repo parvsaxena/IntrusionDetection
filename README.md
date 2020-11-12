@@ -19,15 +19,19 @@ sudo apt install postgresql postgresql-contrib
 /etc/init.d/postgresql start
 ```
 
-Create database users
+Then, create a database `scada` for the IDS system, and login to the `psql` prompt
 ```
-sudo -u postgres psql (gets psql cmd line)
-sudo -u postgres createdb scada (creates db scada)
-create user mini; (creates user mini without passwd)
-grant all privileges on database scada to mini; (Gives mini all rights on scada, we will use thins user in rest of the scripts)
+sudo -u postgres createdb scada
+sudo -u postgres psql 
 ```
 
-Create table
+Then, in the psql prompt, create a user for the account you plan to use for the IDS, and give it permissions on the databse
+```
+create user mini;
+grant all privileges on database scada to mini; 
+```
+
+Then, use our scripts to create the appropriate tables
 ```
 cd db_scripts; 
 python3 createDB.py
@@ -42,9 +46,6 @@ Capture traffic and insert into db(raw packets and parsed packets)
 cd capture_scripts; sudo python train_live_capture.py &
 
 Parameters in file:
-- `Run_in_bg`
-- `Is_training_mode` - set to True if just using for good data capture
-- `Disable_db_insertion` - If set will not insert into db
 - `iface` - give the SPAN port interface
 - `timeout` - duration of traffic capture in seconds
 - `filter` - Edit if we need to filter capture traffic at sniffing level
