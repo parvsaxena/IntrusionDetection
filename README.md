@@ -114,9 +114,12 @@ Now run script -
 ```
 cd ml/packet;
 check ips and mac addresses defined in init are correct.These are environment dependent.
+
 python featurize_per_pkt.py (This is feature engineering step, the transformed feature vectors are stored into per_packet table in db. We can use this to train multiple models.)
+
 python lor_distinct_tr.py (This will generate the models and stores in the same directory. This training needs to be done if anycomponent of system changes.)
 
+Current Models for Packet Analysis based ML models-
 [`lof`](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFac    tor.html) Local Outlier Factor
 ['StandardScaler'](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
 ```
