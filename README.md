@@ -107,9 +107,9 @@ Extract from packet_feat table unique rows of needed data.
 
 In psql -
 ```
-Create table features as select ('ip_src', 'ip_dst', 'ip_ttl', 'ip_len', 'ip_ver', 'proto', 'mac_src', 'mac_dst',  'tcp_src_port', 'tcp_dst_port', 'udp_src_port', 'udp_dst_port', 'icmp_type', 'icmp_code', 'arp_op', 'arp_psrc', 'arp_pdst', 'arp_hwsrc', 'arp_hwdst', 'has_ip', 'has_ether', 'has_tcp', 'has_udp', 'has_icmp', 'has_arp') from packet_feats;
+create table features as select ip_src, ip_dst, ip_ttl, ip_len, ip_ver, proto, mac_src, mac_dst,  tcp_src_port, tcp_dst_port, udp_src_port, udp_dst_port, icmp_type, icmp_code, arp_op, arp_psrc, arp_pdst, arp_hwsrc, arp_hwdst, has_ip, has_ether, has_tcp, has_udp, has_icmp, has_arp from packet_feat;
 
-create table  sahiti_distinct as select distinct * from features;
+create table  features_distinct as select distinct * from features;
 ```
 This extracts distinct packets headers and make training faster.
 
