@@ -105,20 +105,20 @@ Finally, make sure to put the models you wish to use in `config.py` in the predi
 ### Packet Analysis based ML models
 Extract from packet_feat table unique rows of needed data.
 
-In psql -
-```
-create table features as select ip_src, ip_dst, ip_ttl, ip_len, ip_ver, proto, mac_src, mac_dst,  tcp_src_port, tcp_dst_port, udp_src_port, udp_dst_port, icmp_type, icmp_code, arp_op, arp_psrc, arp_pdst, arp_hwsrc, arp_hwdst, has_ip, has_ether, has_tcp, has_udp, has_icmp, has_arp from packet_feat;
+This can be done by cd db_scripts; python create_distinct_features.py;
 
-create table  features_distinct as select distinct * from features;
-```
+
 This extracts distinct packets headers and make training faster.
 
 Now run script -
 ```
-cd ml;
-check ips and mac addresses defined in init are correct.
-python featurize_per_pkt.py (This is feature engineering step)
-python lor_distinct_tr.py (This will generate the models)
+cd ml/packet;
+check ips and mac addresses defined in init are correct.These are environment dependent.
+python featurize_per_pkt.py (This is feature engineering step, the transformed feature vectors are stored into per_packet table in db. We can use this to train multiple models.)
+python lor_distinct_tr.py (This will generate the models and stores in the same directory. This training needs to be done if anycomponent of system changes.)
+
+[`lof`](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFac    tor.html) Local Outlier Factor
+['StandardScaler'](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
 ```
 
 ## 5. Real time prediction
